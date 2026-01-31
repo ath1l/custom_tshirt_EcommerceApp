@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Orders</title>
+</head>
+<body>
+
+<h1>My Orders</h1>
+
+<ul>
+  <% orders.forEach(order => { %>
+    <li>
+      <h3><%= order.product.name %></h3>
+      <p>Price: ₹<%= order.priceAtPurchase %></p>
+      <p>Status: <%= order.status %></p>
+
+      <p>
+        Color: <%= order.customization.color %><br>
+        Size: <%= order.customization.size %><br>
+        Text: <%= order.customization.text %>
+      </p>
+    </li>
+  <% }) %>
+</ul>
+
+</body>
+</html>

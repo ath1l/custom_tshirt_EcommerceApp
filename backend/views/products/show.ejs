@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= product.name %></title>
+</head>
+<body>
+
+    <a href="/products">← Back to products</a>
+
+    <h1><%= product.name %></h1>
+
+    <p><strong>Price:</strong> ₹<%= product.price %></p>
+
+    <p><%= product.description %></p>
+
+<form action="/orders/<%= product._id %>" method="POST">
+  <label>Color</label>
+  <input name="color" required>
+
+  <label>Size</label>
+  <select name="size">
+    <option>S</option>
+    <option>M</option>
+    <option>L</option>
+    <option>XL</option>
+  </select>
+
+  <label>Custom Text</label>
+  <input name="text">
+
+  <button>Order Now</button>
+</form>
+
+
+</body>
+</html>
