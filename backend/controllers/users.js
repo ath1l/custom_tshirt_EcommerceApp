@@ -7,18 +7,18 @@ module.exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
     const user = new User({ username, email });
-    
+
     // Register user (passport-local-mongoose handles hashing)
     const registeredUser = await User.register(user, password);
-    
+
     // Auto-login after registration
     req.login(registeredUser, (err) => {
       if (err) {
-        return res.status(500).json({ 
-          message: 'Registration succeeded but login failed' 
+        return res.status(500).json({
+          message: 'Registration succeeded but login failed'
         });
       }
-      
+
       // Return JSON instead of redirect
       return res.json({
         message: 'Registration successful',
@@ -31,8 +31,8 @@ module.exports.register = async (req, res) => {
     });
   } catch (err) {
     // Handle errors (like duplicate username)
-    res.status(400).json({ 
-      message: err.message || 'Registration failed' 
+    res.status(400).json({
+      message: err.message || 'Registration failed'
     });
   }
 };
@@ -43,18 +43,18 @@ module.exports.login = (req, res, next) => {
     if (err) {
       return res.status(500).json({ message: 'Server error' });
     }
-    
+
     if (!user) {
-      return res.status(401).json({ 
-        message: info?.message || 'Invalid username or password' 
+      return res.status(401).json({
+        message: info?.message || 'Invalid username or password'
       });
     }
-    
+
     req.logIn(user, (err) => {
       if (err) {
         return res.status(500).json({ message: 'Login failed' });
       }
-      
+
       // Call your controller's success handler
       userController.loginSuccess(req, res);
     });
@@ -100,29 +100,4 @@ module.exports.checkAuth = (req, res) => {
   }
 };
 
-// const User = require('../models/User');
 
-// module.exports.registerForm = (req, res) => {
-//   res.render('users/register');
-// };
-
-// module.exports.register = async (req, res) => {
-//   const { username, email, password } = req.body;
-//   const user = new User({ username, email });
-//   await User.register(user, password);
-//   res.redirect('/login');
-// };
-
-// module.exports.loginForm = (req, res) => {
-//   res.render('users/login');
-// };
-
-// module.exports.loginSuccess = (req, res) => {
-//   res.redirect('/');
-// };
-
-// module.exports.logout = (req, res) => {
-//   req.logout(() => {
-//     res.redirect('/');
-//   });
-// };

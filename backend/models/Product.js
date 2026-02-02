@@ -3,8 +3,16 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
     name: String,
     price: Number,
+
+    // Image shown on Home page card
     image: String,
-    description: String
+
+    // Base image used in Fabric canvas
+    baseImage: String,
+
+    description: String,
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model("Product", productSchema);
+
+

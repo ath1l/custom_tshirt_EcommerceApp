@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
+import { useParams } from "react-router-dom";
+
 
 
 // Helper for custom delete icon
@@ -37,8 +39,11 @@ const deleteObject = (eventData, transform) => {
 };
 
 function Customize() {
+  const { productId } = useParams();
+
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
+  const productRef = useRef(null);
 
   /* =========================
      DEFINE PRINT AREA
@@ -63,12 +68,13 @@ function Customize() {
 
       fabricCanvasRef.current = canvas;
 
-      /* =========================
-         ADD TSHIRT AS LOCKED OBJECT
-         (NOT backgroundImage – Fabric v7 safe)
-      ========================== */
 
-      const tshirt = await fabric.Image.fromURL("/tshirt.png");
+      // 1️⃣ Fetch product using productId
+      const res = await fetch(`http://localhost:3000/products/${productId}`);
+      const product = await res.json();
+      productRef.current = product;
+
+      const tshirt = await fabric.Image.fromURL(product.baseImage);
 
       // ----- FIT IMAGE INSIDE CANVAS (v7 SAFE) -----
       const scale = Math.min(
@@ -91,7 +97,8 @@ function Customize() {
       canvas.centerObject(tshirt);
       tshirt.setCoords();
 
-      canvas.sendToBack(tshirt);
+
+
 
       // DRAW PRINT AREA GUIDE (Visual only)
       const guideRect = new fabric.Rect({
@@ -107,6 +114,8 @@ function Customize() {
         strokeDashArray: [10, 5],
         selectable: false,
         evented: false,
+        // ⭐ ADD THIS
+        isPrintGuide: true,
       });
 
       canvas.add(guideRect);
@@ -179,25 +188,58 @@ function Customize() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitDesign = () => {
+  const handleSubmitDesign = async () => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    // 1️⃣ Full editable design data
-    const designJSON = canvas.toJSON();
+    // 1️⃣ Hide print guide temporarily
+    const guide = canvas.getObjects().find(obj => obj.isPrintGuide);
+    if (guide) {
+      guide.visible = false;
+    }
 
-    // 2️⃣ Visual preview (what user actually sees)
+    canvas.requestRenderAll();
+
+    // 2️⃣ Generate data
+    const designJSON = canvas.toJSON();
     const previewImage = canvas.toDataURL({
       format: "png",
-      multiplier: 2, // higher quality
+      multiplier: 2,
     });
 
-    console.log("==== DESIGN JSON ====");
-    console.log(designJSON);
+    // 3️⃣ Restore print guide
+    if (guide) {
+      guide.visible = true;
+    }
+    canvas.requestRenderAll();
 
-    console.log("==== PREVIEW IMAGE ====");
-    console.log(previewImage);
+    // 4️⃣ Send to backend
+    try {
+      const res = await fetch("http://localhost:3000/orders", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          designJSON,
+          previewImage,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Order creation failed");
+      }
+
+      alert("Order placed successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to place order");
+    }
   };
+
+
 
 
   return (
