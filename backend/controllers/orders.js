@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 
 module.exports.createOrder = async (req, res) => {
   try {
-    const { productId, designJSON, previewImage } = req.body;
+    const { productId, designJSON, previewImage, material } = req.body;
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -11,12 +11,13 @@ module.exports.createOrder = async (req, res) => {
     }
 
     const order = new Order({
-      userId: req.user._id,      // ✅ FIX
-      productId: product._id,    // ✅ FIX
+      userId: req.user._id,
+      productId: product._id,
       totalPrice: product.price,
       customization: {
         designJSON,
         previewImage,
+        material: material || 'Cotton',
       },
     });
 

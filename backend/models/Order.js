@@ -22,6 +22,11 @@ const orderSchema = new mongoose.Schema({
       type: String, // base64 PNG
       required: true,
     },
+     material: {
+    type: String,
+    enum: ['Cotton', 'Cotton-Poly Blend', 'Polyester'],
+    default: 'Cotton',
+  },
   },
 
   quantity: {

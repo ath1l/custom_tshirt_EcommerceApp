@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef , useState  } from "react";
 import * as fabric from "fabric";
 import { useParams } from "react-router-dom";
 
@@ -44,6 +44,7 @@ function Customize() {
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const productRef = useRef(null);
+  const [material, setMaterial] = useState('Cotton');
 
   /* =========================
      DEFINE PRINT AREA
@@ -225,6 +226,7 @@ function Customize() {
           productId,
           designJSON,
           previewImage,
+          material, 
         }),
       });
 
@@ -247,6 +249,16 @@ function Customize() {
       <h2>Customize Your T-Shirt</h2>
 
       <input type="file" accept="image/*" onChange={handleImageUpload} />
+        
+        <select
+    value={material}
+    onChange={(e) => setMaterial(e.target.value)}
+    style={{ marginLeft: "10px" }}
+  >
+    <option value="Cotton">Cotton</option>
+    <option value="Cotton-Poly Blend">Cotton-Poly Blend</option>
+    <option value="Polyester">Polyester</option>
+  </select>
 
       <button
         onClick={handleSubmitDesign}

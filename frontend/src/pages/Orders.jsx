@@ -38,6 +38,7 @@ function Orders() {
           >
             <h4>{order.productId?.name}</h4>
             <p>Price: ₹{order.productId?.price}</p>
+            <p>Material: {order.customization?.material || 'Cotton'}</p>
 
             <img
               src={order.customization.previewImage}
