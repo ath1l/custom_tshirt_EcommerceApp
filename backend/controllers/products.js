@@ -3,12 +3,16 @@ const Product = require('../models/Product');
 
 module.exports.index = async (req, res) => {
   try {
-    const products = await Product.find(); // Mongoose query
-    res.json(products); // Return JSON
+    const filter = {};
+    if (req.query.type) {
+      filter.type = req.query.type;
+    }
+    const products = await Product.find(filter);
+    res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
-}
+};
 
 module.exports.show = async (req, res) => {
   try {

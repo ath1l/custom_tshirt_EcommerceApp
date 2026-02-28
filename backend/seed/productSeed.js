@@ -14,6 +14,7 @@ const products = [
         image: "/products/black-thumb.png",
         baseImage: "/tshirts/black.png",
         description: "Premium black cotton T-shirt",
+        type: "tshirt",
     },
     {
         name: "White T-Shirt",
@@ -21,6 +22,7 @@ const products = [
         image: "/products/white-thumb.png",
         baseImage: "/tshirts/white.png",
         description: "Classic white cotton T-shirt",
+        type: "tshirt",
     },
     {
         name: "Red T-Shirt",
@@ -28,6 +30,7 @@ const products = [
         image: "/products/red-thumb.png",
         baseImage: "/tshirts/red.png",
         description: "Stylish red cotton T-shirt",
+        type: "tshirt",
     },
 ];
 
