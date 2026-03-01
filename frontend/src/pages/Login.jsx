@@ -1,6 +1,8 @@
 // frontend/src/pages/Login.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import "../styles/background.css";
+import "../styles/login.css";
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -8,10 +10,8 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent page reload
+    e.preventDefault();
     setError('');
     setLoading(true);
 
@@ -21,22 +21,19 @@ function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Send cookies
-        body: JSON.stringify({ username, password })
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Success - redirect to products
-        //navigate('/products');
         window.location.href = '/products';
       } else {
-        // Show error from backend
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      setError('Network error.  backend not running?');
+      setError('Network error. backend not running?');
       console.error(err);
     } finally {
       setLoading(false);
@@ -44,40 +41,41 @@ function Login() {
   };
 
   return (
-    <div>
-      <h1>Login</h1>
-      
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="login-page">
+      <div className="login-card">
+        <h1 className="login-title">Login</h1>
+        <p className="login-subtitle">Sign in to continue shopping.</p>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username:</label>
+        {error && <p className="login-error">{error}</p>}
+
+        <form className="login-form" onSubmit={handleSubmit}>
           <input
+            className="login-input"
             type="text"
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
           />
-        </div>
 
-        <div>
-          <label>Password:</label>
           <input
+            className="login-input"
             type="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+          <button className="login-button" type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
 
-      <p>
-        Don't have an account? <a href="/register">Register</a>
-      </p>
+        <p className="login-footer">
+          Don't have an account? <Link to="/register">Register</Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,89 @@
+/* frontend/src/pages/Register.css */
+
+.register-container {
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-card {
+  background: #ffffff;
+  border: 1px solid var(--soft);
+  padding: 32px;
+  width: 360px;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(17, 17, 17, 0.06);
+}
+
+.register-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #a8c3a0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.register-error {
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.register-form .form-group {
+  margin-bottom: 15px;
+}
+
+.register-form label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.register-form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: var(--text);
+  outline: none;
+}
+
+.register-form input:focus {
+  border-color: var(--accent);
+}
+
+.register-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 999px;
+  background: #a8c3a0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.register-btn:hover:not(:disabled) {
+  background: #889e81;
+}
+
+.register-btn:disabled {
+  background: #9ca3af;
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 15px;
+  color: var(--muted);
+}
+
+.register-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
