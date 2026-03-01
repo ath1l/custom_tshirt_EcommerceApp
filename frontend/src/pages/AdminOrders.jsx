@@ -24,9 +24,14 @@ function AdminOrders() {
   return (
     <div style={{ padding: '20px' }}>
       <h2>All Orders (Admin)</h2>
-      <button onClick={() => navigate('/admin/products/new')} style={{ marginBottom: '20px' }}>
-        + Add New Product
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+  <button onClick={() => navigate('/admin/products')}>
+    Manage Products
+  </button>
+  <button onClick={() => navigate('/admin/products/new')}>
+    + Add New Product
+  </button>
+</div>
 
       {orders.length === 0 ? (
         <p>No orders yet.</p>

@@ -24,6 +24,26 @@ module.exports.addProduct = async (req, res) => {
   }
 };
 
+module.exports.editProduct = async (req, res) => {
+  try {
+    const { name, price, image, baseImage, description, type } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    product.name = name;
+    product.price = price;
+    product.image = image;
+    product.baseImage = baseImage;
+    product.description = description;
+    product.type = type;
+
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to edit product' });
+  }
+};
+
 module.exports.deleteProduct = async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);

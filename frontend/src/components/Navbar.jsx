@@ -66,41 +66,20 @@ function Navbar() {
           )}
 
           {isAdmin && (
-            <Link to="/admin/orders" className="navbar__link">Admin</Link>
-          )}
-        </div>
-
-        <div className="navbar__actions">
-          {isAuthenticated ? (
             <>
-              <button className="logout-btn" onClick={handleLogout}>
-                Logout
-              </button>
-
-              <div className="profile-icon" onClick={() => navigate("/profile")}>
-                P
-              </div>
+              <Link to="/admin/orders">Admin Panel</Link>
+              {' | '}
             </>
-          ) : (
-            <div
-              className={`signin-dropdown ${isSigninOpen ? "is-open" : ""}`}
-              ref={signinRef}
-            >
-              <button
-                type="button"
-                className="signin-text"
-                onClick={() => setIsSigninOpen((prev) => !prev)}
-              >
-                Sign In
-              </button>
-              <div className="dropdown-menu">
-                <Link to="/login" onClick={() => setIsSigninOpen(false)}>Login</Link>
-                <Link to="/register" onClick={() => setIsSigninOpen(false)}>Register</Link>
-              </div>
-            </div>
           )}
-        </div>
-      </div>
+          <button onClick={handleLogout}>Logout</button>
+        </>
+      ) : (
+        <>
+          <Link to="/login">Login</Link>
+          {' | '}
+          <Link to="/register">Register</Link>
+        </>
+      )}
     </nav>
   );
 }

@@ -5,6 +5,7 @@ const { isLoggedIn, isAdmin } = require('../middleware');
 
 router.get('/orders', isLoggedIn, isAdmin, adminController.getAllOrders);
 router.post('/products', isLoggedIn, isAdmin, adminController.addProduct);
+router.put('/products/:id', isLoggedIn, isAdmin, adminController.editProduct);
 router.delete('/products/:id', isLoggedIn, isAdmin, adminController.deleteProduct);
 
 module.exports = router;
