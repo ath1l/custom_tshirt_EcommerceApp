@@ -62,7 +62,7 @@ function Products() {
               <h3>{product.name}</h3>
               <p>Price: ₹{product.price}</p>
               <p>{product.description}</p>
-              <button onClick={() => navigate(`/customize/${product._id}`)}>
+              <button onClick={() =>navigate(`/products/${product._id}`)}>
                 Customize
               </button>
             </div>
