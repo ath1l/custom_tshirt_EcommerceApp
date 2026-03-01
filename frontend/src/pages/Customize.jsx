@@ -231,6 +231,36 @@ function Customize() {
     }
   };
 
+  const handleAddToCart = async () => {
+  const canvas = fabricCanvasRef.current;
+  if (!canvas) return;
+
+  const guide = canvas.getObjects().find(obj => obj.isPrintGuide);
+  if (guide) guide.visible = false;
+  canvas.requestRenderAll();
+
+  const designJSON = canvas.toJSON();
+  const previewImage = canvas.toDataURL({ format: 'png', multiplier: 2 });
+
+  if (guide) guide.visible = true;
+  canvas.requestRenderAll();
+
+  try {
+    const res = await fetch('http://localhost:3000/cart', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, designJSON, previewImage, material }),
+    });
+
+    if (!res.ok) throw new Error('Failed to add to cart');
+    alert('Added to cart!');
+  } catch (err) {
+    console.error(err);
+    alert('Failed to add to cart. Are you logged in?');
+  }
+};
+
   return (
     <div style={{ padding: '20px', display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
 
@@ -310,12 +340,20 @@ function Customize() {
         </div>
 
         {/* Submit */}
-        <button
-          onClick={handleSubmitDesign}
-          style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer' }}
-        >
-          Place Order
-        </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              onClick={handleAddToCart}
+              style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#333', color: '#fff', border: 'none' }}
+            >
+              Add to Cart 🛒
+            </button>
+            <button
+              onClick={handleSubmitDesign}
+              style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#e44', color: '#fff', border: 'none' }}
+            >
+              Order Now ⚡
+            </button>
+          </div>
       </div>
     </div>
   );

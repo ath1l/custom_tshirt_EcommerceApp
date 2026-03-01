@@ -22,6 +22,7 @@ const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
+const cartRoutes = require('./routes/cart');
 
 
 
@@ -71,6 +72,7 @@ app.use('/', userRoutes);
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin', adminRoutes);
+app.use('/cart', cartRoutes);
 
 // =======================
 // Server

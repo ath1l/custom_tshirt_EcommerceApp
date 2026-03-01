@@ -40,6 +40,8 @@ function Navbar() {
       {' | '}
       <Link to="/orders">Orders</Link>
       {' | '}
+      <Link to="/cart">Cart 🛒</Link>
+      {' | '}
 
       {!isAuthenticated ? (
         <>
