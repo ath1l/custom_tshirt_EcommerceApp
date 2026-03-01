@@ -50,6 +50,8 @@ function Navbar() {
             <>
               <Link to="/admin/orders">Admin Panel</Link>
               {' | '}
+               <Link to="/admin/products">Admin Products</Link>
+              {' | '}
             </>
           )}
           <button onClick={handleLogout}>Logout</button>
