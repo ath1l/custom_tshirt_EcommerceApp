@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Orders from './pages/Orders';
 import Customize from "./pages/Customize";
+import AdminOrders from './pages/AdminOrders';
+import AdminAddProduct from './pages/AdminAddProduct';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/customize/:productId" element={<Customize />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/products/new" element={<AdminAddProduct />} />
       </Routes>
     </>
   );

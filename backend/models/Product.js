@@ -11,6 +11,12 @@ const productSchema = new mongoose.Schema({
     baseImage: String,
 
     description: String,
+
+     type: {
+        type: String,
+        enum: ['tshirt', 'hoodie', 'shirt'],
+        default: 'tshirt',
+    },
 });
 
 module.exports = mongoose.model("Product", productSchema);

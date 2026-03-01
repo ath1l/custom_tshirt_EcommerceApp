@@ -21,6 +21,7 @@ app.use(cors({
 const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
+const adminRoutes = require('./routes/admin');
 
 
 
@@ -69,6 +70,7 @@ app.get('/', (req, res) => {
 app.use('/', userRoutes);
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
 
 // =======================
 // Server
