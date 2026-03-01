@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
-  // TEMPORARILY DISABLED auth check
   useEffect(() => {
-    // checkAuth();
+    checkAuth();
   }, []);
 
   const checkAuth = async () => {
@@ -17,6 +17,7 @@ function Navbar() {
       });
       const data = await res.json();
       setIsAuthenticated(data.isAuthenticated);
+      setIsAdmin(data.user?.role === 'admin');
     } catch (err) {
       console.error(err);
     }
@@ -27,8 +28,8 @@ function Navbar() {
       method: 'POST',
       credentials: 'include'
     });
-
     setIsAuthenticated(false);
+    setIsAdmin(false);
     navigate('/login');
   };
 
@@ -38,19 +39,27 @@ function Navbar() {
       {' | '}
       <Link to="/products">Products</Link>
       {' | '}
-      <Link to="/orders">Orders</Link>
-      {' | '}
-      <Link to="/cart">Cart 🛒</Link>
-      {' | '}
 
-      {!isAuthenticated ? (
+      {isAuthenticated ? (
+        <>
+          <Link to="/cart">Cart 🛒</Link>
+          {' | '}
+          <Link to="/orders">Orders</Link>
+          {' | '}
+          {isAdmin && (
+            <>
+              <Link to="/admin/orders">Admin Panel</Link>
+              {' | '}
+            </>
+          )}
+          <button onClick={handleLogout}>Logout</button>
+        </>
+      ) : (
         <>
           <Link to="/login">Login</Link>
           {' | '}
           <Link to="/register">Register</Link>
         </>
-      ) : (
-        <button onClick={handleLogout}>Logout</button>
       )}
     </nav>
   );

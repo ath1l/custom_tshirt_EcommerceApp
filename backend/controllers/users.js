@@ -92,12 +92,12 @@ module.exports.checkAuth = (req, res) => {
       user: {
         id: req.user._id,
         username: req.user.username,
-        email: req.user.email
+        email: req.user.email,
+        role: req.user.role,   // ← add this
       }
     });
   } else {
     res.json({ isAuthenticated: false });
   }
 };
-
 
