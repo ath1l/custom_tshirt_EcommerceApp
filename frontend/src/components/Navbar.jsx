@@ -30,7 +30,7 @@ function Navbar() {
         credentials: "include",
       });
       const data = await res.json();
-      setIsAuthenticated(data.isAuthenticated);
+      setIsAuthenticated(Boolean(data.isAuthenticated));
       setIsAdmin(data.user?.role === "admin");
     } catch (err) {
       console.error(err);
@@ -51,7 +51,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar__inner">
         <div className="navbar__logo" onClick={() => navigate("/")}>
-          W<span>earify</span>
+          Custo<span>Me</span>
         </div>
 
         <div className="navbar__links">
@@ -66,20 +66,35 @@ function Navbar() {
           )}
 
           {isAdmin && (
-            <>
-              <Link to="/admin/orders">Admin Panel</Link>
-              {' | '}
-            </>
+            <Link to="/admin/orders" className="navbar__link">Admin</Link>
           )}
-          <button onClick={handleLogout}>Logout</button>
-        </>
-      ) : (
-        <>
-          <Link to="/login">Login</Link>
-          {' | '}
-          <Link to="/register">Register</Link>
-        </>
-      )}
+        </div>
+
+        <div className="navbar__actions">
+          {isAuthenticated ? (
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          ) : (
+            <div
+              className={`signin-dropdown ${isSigninOpen ? "is-open" : ""}`}
+              ref={signinRef}
+            >
+              <button
+                type="button"
+                className="signin-text"
+                onClick={() => setIsSigninOpen((prev) => !prev)}
+              >
+                Sign In
+              </button>
+              <div className="dropdown-menu">
+                <Link to="/login" onClick={() => setIsSigninOpen(false)}>Login</Link>
+                <Link to="/register" onClick={() => setIsSigninOpen(false)}>Register</Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }

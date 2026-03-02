@@ -18,20 +18,15 @@ function Login() {
     try {
       const response = await fetch('http://localhost:3000/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
-
-      if (response.ok) {
-        window.location.href = '/products';
-      } else {
-        setError(data.message || 'Login failed');
-      }
+      response.ok
+        ? (window.location.href = '/products')
+        : setError(data.message || 'Login failed');
     } catch (err) {
       setError('Network error. backend not running?');
       console.error(err);
