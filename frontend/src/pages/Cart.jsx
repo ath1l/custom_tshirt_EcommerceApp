@@ -6,16 +6,19 @@ function Cart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [orderingItemId, setOrderingItemId] = useState('');
   const navigate = useNavigate();
 
-  const fetchCart = () => {
-    fetch('http://localhost:3000/cart', { credentials: 'include' })
-      .then((res) => res.json())
-      .then((data) => {
-        setCart(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+  const fetchCart = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/cart', { credentials: 'include' });
+      const data = await res.json();
+      setCart(data);
+    } catch {
+      // keep previous cart state on fetch failure
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -52,6 +55,42 @@ function Cart() {
     }
   };
 
+  const handleOrderNow = async (item) => {
+    if (!item?.productId?._id) return;
+
+    setOrderingItemId(item._id);
+    try {
+      const orderRes = await fetch('http://localhost:3000/orders', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: item.productId._id,
+          designJSON: item.designJSON,
+          previewImage: item.previewImage,
+          material: item.material,
+        }),
+      });
+
+      if (!orderRes.ok) throw new Error('Order failed');
+
+      const removeRes = await fetch(`http://localhost:3000/cart/item/${item._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!removeRes.ok) throw new Error('Failed to update cart');
+
+      await fetchCart();
+      alert('Order placed successfully!');
+      navigate('/orders');
+    } catch {
+      alert('Failed to place this order. Please try again.');
+    } finally {
+      setOrderingItemId('');
+    }
+  };
+
   if (loading) return <p className="cart cart--loading">Loading cart...</p>;
 
   const items = cart?.items || [];
@@ -84,9 +123,18 @@ function Cart() {
                   <p>Qty: {item.quantity}</p>
                 </div>
 
-                <button className="cart__remove-btn" onClick={() => handleRemove(item._id)}>
-                  Remove
-                </button>
+                <div className="cart__item-actions">
+                  <button className="cart__remove-btn" onClick={() => handleRemove(item._id)}>
+                    Remove
+                  </button>
+                  <button
+                    className="cart__order-btn"
+                    onClick={() => handleOrderNow(item)}
+                    disabled={orderingItemId === item._id}
+                  >
+                    {orderingItemId === item._id ? 'Ordering...' : 'Order Now'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

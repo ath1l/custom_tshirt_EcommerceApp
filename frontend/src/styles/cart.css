@@ -83,6 +83,13 @@
   font-size: 0.94rem;
 }
 
+.cart__item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: stretch;
+}
+
 .cart__remove-btn {
   border: none;
   border-radius: 10px;
@@ -92,6 +99,25 @@
   padding: 0.55rem 0.95rem;
   cursor: pointer;
   transition: background-color 0.25s ease;
+}
+.cart__order-btn {
+  border: none;
+  border-radius: 10px;
+  background: #41cf75;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  position: relative;
+}
+.cart__order-btn:hover {
+  background: #16a34a;
+}
+
+.cart__order-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
 .cart__remove-btn:hover {
