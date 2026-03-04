@@ -48,8 +48,8 @@ function AdminAddProduct() {
   const fields = [
     { name: 'name', label: 'Product Name', type: 'text', placeholder: 'e.g. Blue Hoodie' },
     { name: 'price', label: 'Price (₹)', type: 'number', placeholder: 'e.g. 699' },
-    { name: 'image', label: 'Thumbnail Image Path', type: 'text', placeholder: '/products/blue-thumb.png' },
-    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text', placeholder: '/tshirts/blue.png' },
+    { name: 'image', label: 'Thumbnail Image Path', type: 'text', placeholder: '/products/black-thumb.png' },
+    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text', placeholder: '/tshirts/black.png' },
     { name: 'description', label: 'Description', type: 'text', placeholder: 'Short description' },
   ];
 

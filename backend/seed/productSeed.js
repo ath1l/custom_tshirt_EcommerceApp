@@ -19,7 +19,7 @@ const products = [
     {
         name: "White T-Shirt",
         price: 499,
-        image: "/products/white-thumb.png",
+        image: "/products/white t-shirt men large thumb.jpg",
         baseImage: "/tshirts/white.png",
         description: "Classic white cotton T-shirt",
         type: "tshirt",

@@ -5,9 +5,24 @@ function Home() {
   const navigate = useNavigate();
 
   const categories = [
-    { label: 'T-Shirts', value: 'tshirt', desc: 'Daily essentials with premium cotton comfort.' },
-    { label: 'Hoodies', value: 'hoodie', desc: 'Warm layers for streetwear and casual fits.' },
-    { label: 'Shirts', value: 'shirt', desc: 'Smart casual styles with clean finishing.' },
+    {
+      label: 'T-Shirts',
+      value: 'tshirt',
+      desc: 'Daily essentials with premium cotton comfort.',
+      image: '/category thumb/t shirt.webp',
+    },
+    {
+      label: 'Hoodies',
+      value: 'hoodie',
+      desc: 'Warm layers for streetwear and casual fits.',
+      image: '/category thumb/hoodies.webp',
+    },
+    {
+      label: 'Shirts',
+      value: 'shirt',
+      desc: 'Smart casual styles with clean finishing.',
+      image: '/category thumb/shirt.jpg',
+    },
   ];
 
   return (
@@ -51,11 +66,22 @@ function Home() {
         <div className="home__category-grid">
           {categories.map((cat) => (
             <article key={cat.value} className="home__category-card">
+              <img
+                src={cat.image}
+                alt={cat.label}
+                className="home__category-image"
+                loading="lazy"
+              />
               <h3>{cat.label}</h3>
               <p>{cat.desc}</p>
               <button onClick={() => navigate(`/products?type=${cat.value}`)}>View {cat.label}</button>
             </article>
           ))}
+        </div>
+
+        <div className="home__more-categories">
+          <p>For more categories, explore our full catalog.</p>
+          <button onClick={() => navigate('/products')}>View All Categories</button>
         </div>
       </section>
     </main>

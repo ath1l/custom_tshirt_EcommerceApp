@@ -1,75 +1,123 @@
-// frontend/src/pages/Products.jsx
-import { useState, useEffect } from 'react';
-import { useNavigate ,useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import '../styles/products.css';
 
 function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const type = searchParams.get('type');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedType = searchParams.get('type') || 'all';
+
+  const categories = [
+    { label: 'All Products', value: 'all', image: '/category thumb/all product.png' },
+    { label: 'T-Shirts', value: 'tshirt', image: '/category thumb/t shirt.webp' },
+    { label: 'Hoodies', value: 'hoodie', image: '/category thumb/hoodies.webp' },
+    { label: 'Shirts', value: 'shirt', image: '/category thumb/shirt.jpg' },
+  ];
 
   useEffect(() => {
     fetchProducts();
-  }, [type]); // re-fetch whenever type changes
+  }, [selectedType]);
 
-   const fetchProducts = async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
-      const url = type
-        ? `http://localhost:3000/products?type=${type}`
-        : 'http://localhost:3000/products';
+      setError('');
+      const url = selectedType === 'all'
+        ? 'http://localhost:3000/products'
+        : `http://localhost:3000/products?type=${selectedType}`;
 
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+
       const data = await response.json();
       setProducts(data);
-      setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Failed to load products');
+    } finally {
       setLoading(false);
     }
   };
 
   const typeLabels = { tshirt: 'T-Shirts', hoodie: 'Hoodies', shirt: 'Shirts' };
 
+  const handleCategoryClick = (value) => {
+    if (value === 'all') {
+      setSearchParams({});
+      return;
+    }
+    setSearchParams({ type: value });
+  };
+
   if (loading) {
-    return <div>Loading products...</div>;
+    return <div className="products-page products-message">Loading products...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="products-page products-message">Error: {error}</div>;
   }
 
-   return (
-    <div style={{ padding: '20px' }}>
-      <h1>{type ? typeLabels[type] : 'All Products'}</h1>
+  return (
+    <main className="products-page">
+      <section className="products-categories">
+        <h2>Categories</h2>
+        <div className="products-categories-grid">
+          {categories.map((category) => (
+            <button
+              key={category.value}
+              className={`products-category-card ${selectedType === category.value ? 'is-active' : ''}`}
+              onClick={() => handleCategoryClick(category.value)}
+              type="button"
+            >
+              <img src={category.image} alt={category.label} loading="lazy" />
+              <span>{category.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <h1>{selectedType === 'all' ? 'All Products' : typeLabels[selectedType]}</h1>
 
       {products.length === 0 ? (
         <p>No products found for this category.</p>
       ) : (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+        <div className="products-grid">
           {products.map((product) => (
             <div
               key={product._id}
-              style={{ border: '1px solid #ccc', padding: '10px', width: '220px' }}
+              className="products-card"
+              onClick={() => navigate(`/products/${product._id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  navigate(`/products/${product._id}`);
+                }
+              }}
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                style={{ width: '100%', marginBottom: '10px' }}
-              />
+              <img src={product.image} alt={product.name} className="products-card-image" />
               <h3>{product.name}</h3>
-              <p>Price: ₹{product.price}</p>
-              <p>{product.description}</p>
-              <button onClick={() =>navigate(`/products/${product._id}`)}>
-                Customize
+              <p className="products-price">Price: Rs. {product.price}</p>
+              <p className="products-description">{product.description}</p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/products/${product._id}`);
+                }}
+                type="button"
+              >
+                View Product
               </button>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }
+
 export default Products;
