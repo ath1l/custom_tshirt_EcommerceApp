@@ -6,41 +6,39 @@ const orderSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
     required: true,
   },
-
   customization: {
     designJSON: {
-      type: Object, // Fabric JSON
+      type: Object,
       required: true,
     },
     previewImage: {
-      type: String, // base64 PNG
+      type: String,
       required: true,
     },
-     material: {
-    type: String,
-    enum: ['Cotton', 'Cotton-Poly Blend', 'Polyester'],
-    default: 'Cotton',
+    material: {
+      type: String,
+      enum: ['Cotton', 'Cotton-Poly Blend', 'Polyester'],
+      default: 'Cotton',
+    },
   },
-  },
-
   quantity: {
     type: Number,
     default: 1,
   },
-
   totalPrice: Number,
-
+  paymentId: {
+    type: String,      // Razorpay payment_id e.g. "pay_ABC123"
+    default: null,
+  },
   status: {
     type: String,
     default: "pending",
   },
-
   createdAt: {
     type: Date,
     default: Date.now,

@@ -1,3 +1,6 @@
+require('dotenv').config();
+console.log('KEY:', process.env.RAZORPAY_KEY_ID);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -23,7 +26,7 @@ const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const cartRoutes = require('./routes/cart');
-
+const paymentRoutes = require('./routes/payment');
 
 
 // =======================
@@ -73,6 +76,7 @@ app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin', adminRoutes);
 app.use('/cart', cartRoutes);
+app.use('/payment', paymentRoutes);
 
 // =======================
 // Server

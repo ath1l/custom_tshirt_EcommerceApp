@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { openRazorpayCheckout } from "../utils/razorpay";
 
 const renderIcon = (ctx, left, top, styleOverride, fabricObject) => {
   const size = 24;
@@ -43,6 +44,7 @@ const FONTS = [
 
 function Customize() {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const productRef = useRef(null);
@@ -129,7 +131,6 @@ function Customize() {
       editable: true,
     });
 
-    // Clip to print area
     const clipRect = new fabric.Rect({
       width: printArea.width,
       height: printArea.height,
@@ -141,7 +142,6 @@ function Customize() {
     });
     text.clipPath = clipRect;
 
-    // Delete control
     text.controls.deleteControl = new fabric.Control({
       x: 0.5,
       y: -0.5,
@@ -200,11 +200,9 @@ function Customize() {
     reader.readAsDataURL(file);
   };
 
-  /* ── SUBMIT ── */
-  const handleSubmitDesign = async () => {
+  /* ── Helper: capture canvas snapshot ── */
+  const captureDesign = () => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
     const guide = canvas.getObjects().find(obj => obj.isPrintGuide);
     if (guide) guide.visible = false;
     canvas.requestRenderAll();
@@ -215,51 +213,61 @@ function Customize() {
     if (guide) guide.visible = true;
     canvas.requestRenderAll();
 
+    return { designJSON, previewImage };
+  };
+
+  /* ── ORDER NOW (with Razorpay) ── */
+  const handleOrderNow = async () => {
+    const product = productRef.current;
+    if (!product) return;
+
+    const { designJSON, previewImage } = captureDesign();
+
     try {
-      const res = await fetch('http://localhost:3000/orders', {
+      const paymentResponse = await openRazorpayCheckout(product.price, product.name);
+
+      const verifyRes = await fetch('http://localhost:3000/payment/verify', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...paymentResponse,
+          type: 'single',
+          singleItem: { productId, designJSON, previewImage, material },
+        }),
+      });
+
+      if (!verifyRes.ok) throw new Error('Payment verification failed');
+
+      alert('Order placed successfully!');
+      navigate('/orders');
+    } catch (err) {
+      if (err.message !== 'Payment cancelled') {
+        console.error(err);
+        alert(err.message || 'Failed to place order');
+      }
+    }
+  };
+
+  /* ── ADD TO CART (no payment, same as before) ── */
+  const handleAddToCart = async () => {
+    const { designJSON, previewImage } = captureDesign();
+
+    try {
+      const res = await fetch('http://localhost:3000/cart', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, designJSON, previewImage, material }),
       });
 
-      if (!res.ok) throw new Error('Order creation failed');
-      alert('Order placed successfully!');
+      if (!res.ok) throw new Error('Failed to add to cart');
+      alert('Added to cart!');
     } catch (err) {
       console.error(err);
-      alert('Failed to place order');
+      alert('Failed to add to cart. Are you logged in?');
     }
   };
-
-  const handleAddToCart = async () => {
-  const canvas = fabricCanvasRef.current;
-  if (!canvas) return;
-
-  const guide = canvas.getObjects().find(obj => obj.isPrintGuide);
-  if (guide) guide.visible = false;
-  canvas.requestRenderAll();
-
-  const designJSON = canvas.toJSON();
-  const previewImage = canvas.toDataURL({ format: 'png', multiplier: 2 });
-
-  if (guide) guide.visible = true;
-  canvas.requestRenderAll();
-
-  try {
-    const res = await fetch('http://localhost:3000/cart', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, designJSON, previewImage, material }),
-    });
-
-    if (!res.ok) throw new Error('Failed to add to cart');
-    alert('Added to cart!');
-  } catch (err) {
-    console.error(err);
-    alert('Failed to add to cart. Are you logged in?');
-  }
-};
 
   return (
     <div style={{ padding: '20px', display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
@@ -339,21 +347,21 @@ function Customize() {
           <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: '100%' }} />
         </div>
 
-        {/* Submit */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button
-              onClick={handleAddToCart}
-              style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#333', color: '#fff', border: 'none' }}
-            >
-              Add to Cart 🛒
-            </button>
-            <button
-              onClick={handleSubmitDesign}
-              style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#e44', color: '#fff', border: 'none' }}
-            >
-              Order Now ⚡
-            </button>
-          </div>
+        {/* Action buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={handleAddToCart}
+            style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#333', color: '#fff', border: 'none' }}
+          >
+            Add to Cart 🛒
+          </button>
+          <button
+            onClick={handleOrderNow}
+            style={{ width: '100%', padding: '10px', fontSize: '16px', cursor: 'pointer', background: '#e44', color: '#fff', border: 'none' }}
+          >
+            Order Now ⚡
+          </button>
+        </div>
       </div>
     </div>
   );

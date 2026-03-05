@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { openRazorpayCheckout } from '../utils/razorpay';
 import '../styles/cart.css';
 
 function Cart() {
@@ -37,55 +38,86 @@ function Cart() {
     }
   };
 
+  // Checkout ALL items via Razorpay
   const handleCheckout = async () => {
+    const items = cart?.items || [];
+    if (items.length === 0) return;
+
+    const total = items.reduce(
+      (sum, item) => sum + (item.productId?.price || 0) * (item.quantity || 1),
+      0
+    );
+
     setCheckingOut(true);
     try {
-      const res = await fetch('http://localhost:3000/cart/checkout', {
+      const paymentResponse = await openRazorpayCheckout(
+        total,
+        `Cart checkout – ${items.length} item(s)`
+      );
+
+      // Verify on backend & create orders
+      const verifyRes = await fetch('http://localhost:3000/payment/verify', {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...paymentResponse, type: 'cart' }),
       });
 
-      if (!res.ok) throw new Error('Checkout failed');
+      if (!verifyRes.ok) throw new Error('Payment verification failed');
+
       alert('All orders placed successfully!');
       navigate('/orders');
-    } catch {
-      alert('Checkout failed. Are you logged in?');
+    } catch (err) {
+      if (err.message !== 'Payment cancelled') {
+        alert(err.message || 'Checkout failed. Please try again.');
+      }
     } finally {
       setCheckingOut(false);
     }
   };
 
+  // Order a SINGLE cart item via Razorpay
   const handleOrderNow = async (item) => {
     if (!item?.productId?._id) return;
 
     setOrderingItemId(item._id);
     try {
-      const orderRes = await fetch('http://localhost:3000/orders', {
+      const paymentResponse = await openRazorpayCheckout(
+        item.productId.price,
+        item.productId.name
+      );
+
+      const verifyRes = await fetch('http://localhost:3000/payment/verify', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productId: item.productId._id,
-          designJSON: item.designJSON,
-          previewImage: item.previewImage,
-          material: item.material,
+          ...paymentResponse,
+          type: 'single',
+          singleItem: {
+            productId: item.productId._id,
+            designJSON: item.designJSON,
+            previewImage: item.previewImage,
+            material: item.material,
+          },
         }),
       });
 
-      if (!orderRes.ok) throw new Error('Order failed');
+      if (!verifyRes.ok) throw new Error('Payment verification failed');
 
-      const removeRes = await fetch(`http://localhost:3000/cart/item/${item._id}`, {
+      // Remove the ordered item from cart
+      await fetch(`http://localhost:3000/cart/item/${item._id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
 
-      if (!removeRes.ok) throw new Error('Failed to update cart');
-
       await fetchCart();
       alert('Order placed successfully!');
       navigate('/orders');
-    } catch {
-      alert('Failed to place this order. Please try again.');
+    } catch (err) {
+      if (err.message !== 'Payment cancelled') {
+        alert(err.message || 'Failed to place order. Please try again.');
+      }
     } finally {
       setOrderingItemId('');
     }
@@ -94,7 +126,10 @@ function Cart() {
   if (loading) return <p className="cart cart--loading">Loading cart...</p>;
 
   const items = cart?.items || [];
-  const total = items.reduce((sum, item) => sum + (item.productId?.price || 0) * item.quantity, 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.productId?.price || 0) * item.quantity,
+    0
+  );
 
   return (
     <section className="cart">
@@ -132,7 +167,7 @@ function Cart() {
                     onClick={() => handleOrderNow(item)}
                     disabled={orderingItemId === item._id}
                   >
-                    {orderingItemId === item._id ? 'Ordering...' : 'Order Now'}
+                    {orderingItemId === item._id ? 'Processing...' : 'Order Now'}
                   </button>
                 </div>
               </article>
@@ -141,8 +176,12 @@ function Cart() {
 
           <div className="cart__summary">
             <h3>Total: Rs {total}</h3>
-            <button className="cart__checkout-btn" onClick={handleCheckout} disabled={checkingOut}>
-              {checkingOut ? 'Placing Orders...' : 'Checkout All'}
+            <button
+              className="cart__checkout-btn"
+              onClick={handleCheckout}
+              disabled={checkingOut}
+            >
+              {checkingOut ? 'Processing...' : `Pay Rs ${total}`}
             </button>
           </div>
         </>
