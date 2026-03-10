@@ -4,6 +4,7 @@ const adminController = require('../controllers/admin');
 const { isLoggedIn, isAdmin } = require('../middleware');
 
 router.get('/orders', isLoggedIn, isAdmin, adminController.getAllOrders);
+router.patch('/orders/:id/status', isLoggedIn, isAdmin, adminController.updateOrderStatus);
 router.post('/products', isLoggedIn, isAdmin, adminController.addProduct);
 router.put('/products/:id', isLoggedIn, isAdmin, adminController.editProduct);
 router.delete('/products/:id', isLoggedIn, isAdmin, adminController.deleteProduct);

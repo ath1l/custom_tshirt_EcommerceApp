@@ -101,7 +101,7 @@ function Products() {
             >
               <img src={product.image} alt={product.name} className="products-card-image" />
               <h3>{product.name}</h3>
-              <p className="products-price">Price: Rs. {product.price}</p>
+              <p className="products-price">Rs. {product.price}</p>
               <p className="products-description">{product.description}</p>
               <button
                 onClick={(e) => {

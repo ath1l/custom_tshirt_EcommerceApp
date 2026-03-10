@@ -12,6 +12,33 @@ module.exports.getAllOrders = async (req, res) => {
   }
 };
 
+module.exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowedStatuses = ['pending', 'delivered'];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    order.status = status;
+    await order.save();
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate('userId', 'username email')
+      .populate('productId');
+
+    res.json(populatedOrder);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
+};
+
 module.exports.addProduct = async (req, res) => {
   try {
     const { name, price, image, baseImage, description, type } = req.body;
