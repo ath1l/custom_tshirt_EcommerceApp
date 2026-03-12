@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/product-detail.css';
+import { openRazorpayCheckout } from '../utils/razorpay';
+
+
 
 const typeLabels = {
   tshirt: 'T-Shirt',
@@ -122,32 +125,40 @@ function ProductDetail() {
   };
 
   const handleOrderNow = async () => {
-    try {
-      setSubmittingAction('order');
-      const response = await fetch('http://localhost:3000/orders', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(basePayload),
-      });
+  try {
+    setSubmittingAction('order');
 
-      if (response.status === 401) {
-        navigate('/login');
-        return;
-      }
+    const paymentResponse = await openRazorpayCheckout(product.price, product.name);
 
-      if (!response.ok) {
-        throw new Error('Failed to place order');
-      }
+    const verifyRes = await fetch('http://localhost:3000/payment/verify', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...paymentResponse,
+        type: 'single',
+        singleItem: basePayload,
+      }),
+    });
 
-      alert('Order placed successfully.');
-      navigate('/orders');
-    } catch {
-      alert('Failed to place order. Please log in and try again.');
-    } finally {
-      setSubmittingAction('');
+    if (verifyRes.status === 401) {
+      navigate('/login');
+      return;
     }
-  };
+
+    if (!verifyRes.ok) throw new Error('Payment verification failed');
+
+    alert('Order placed successfully.');
+    navigate('/orders');
+  } catch (err) {
+    if (err.message !== 'Payment cancelled') {
+      console.error('Order failed:', err);
+      alert('Failed to place order. Please try again.');
+    }
+  } finally {
+    setSubmittingAction('');
+  }
+};
 
   return (
     <main className="product-detail">

@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema({
   customization: {
     designJSON: {
       type: Object,
-      required: true,
+      default: null,
     },
     previewImage: {
       type: String,
