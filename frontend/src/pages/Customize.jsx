@@ -232,6 +232,11 @@ function Customize() {
         }),
       });
 
+      if (verifyRes.status === 401) {
+        navigate('/login');
+        return;
+      }
+
       if (!verifyRes.ok) throw new Error("Payment verification failed");
 
       alert("Order placed successfully!");
@@ -254,6 +259,11 @@ function Customize() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, designJSON, previewImage, material }),
       });
+
+      if (res.status === 401) {
+        navigate('/login');
+        return;
+      }
 
       if (!res.ok) throw new Error("Failed to add to cart");
       alert("Added to cart!");

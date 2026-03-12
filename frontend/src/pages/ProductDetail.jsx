@@ -104,6 +104,11 @@ function ProductDetail() {
         body: JSON.stringify(basePayload),
       });
 
+      if (response.status === 401) {
+        navigate('/login');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to add to cart');
       }
@@ -125,6 +130,11 @@ function ProductDetail() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(basePayload),
       });
+
+      if (response.status === 401) {
+        navigate('/login');
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to place order');

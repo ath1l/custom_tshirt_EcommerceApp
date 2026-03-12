@@ -13,6 +13,13 @@ function Cart() {
   const fetchCart = async () => {
     try {
       const res = await fetch('http://localhost:3000/cart', { credentials: 'include' });
+
+      if (res.status === 401) {
+        // not logged in, send straight to login page
+        navigate('/login');
+        return;
+      }
+
       const data = await res.json();
       setCart(data);
     } catch {
@@ -28,10 +35,14 @@ function Cart() {
 
   const handleRemove = async (itemId) => {
     try {
-      await fetch(`http://localhost:3000/cart/item/${itemId}`, {
+      const res = await fetch(`http://localhost:3000/cart/item/${itemId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
+      if (res.status === 401) {
+        navigate('/login');
+        return;
+      }
       fetchCart();
     } catch {
       alert('Failed to remove item');
@@ -62,6 +73,11 @@ function Cart() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...paymentResponse, type: 'cart' }),
       });
+
+      if (verifyRes.status === 401) {
+        navigate('/login');
+        return;
+      }
 
       if (!verifyRes.ok) throw new Error('Payment verification failed');
 
@@ -102,6 +118,11 @@ function Cart() {
           },
         }),
       });
+
+      if (verifyRes.status === 401) {
+        navigate('/login');
+        return;
+      }
 
       if (!verifyRes.ok) throw new Error('Payment verification failed');
 
