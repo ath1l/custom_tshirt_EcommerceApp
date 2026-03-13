@@ -9,6 +9,9 @@ function Cart() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [orderingItemId, setOrderingItemId] = useState('');
   const navigate = useNavigate();
+  const items = cart?.items || [];
+  const outOfStockItems = items.filter((item) => item.productId?.isOutOfStock);
+  const hasOutOfStockItems = outOfStockItems.length > 0;
 
   const fetchCart = async () => {
     try {
@@ -49,10 +52,38 @@ function Cart() {
     }
   };
 
+  const handleQuantityChange = async (itemId, nextQuantity) => {
+    try {
+      const res = await fetch(`http://localhost:3000/cart/item/${itemId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: Math.max(1, nextQuantity) }),
+      });
+
+      if (res.status === 401) {
+        navigate('/login');
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to update quantity');
+      }
+
+      fetchCart();
+    } catch (error) {
+      alert(error.message || 'Failed to update quantity.');
+    }
+  };
+
   // Checkout ALL items via Razorpay
   const handleCheckout = async () => {
-    const items = cart?.items || [];
     if (items.length === 0) return;
+    if (hasOutOfStockItems) {
+      alert('Remove out-of-stock products from your cart before checkout.');
+      return;
+    }
 
     const total = items.reduce(
       (sum, item) => sum + (item.productId?.price || 0) * (item.quantity || 1),
@@ -95,12 +126,16 @@ function Cart() {
   // Order a SINGLE cart item via Razorpay
   const handleOrderNow = async (item) => {
     if (!item?.productId?._id) return;
+    if (item.productId?.isOutOfStock) {
+      alert('This product is out of stock and cannot be ordered.');
+      return;
+    }
 
     setOrderingItemId(item._id);
     try {
       const paymentResponse = await openRazorpayCheckout(
-        item.productId.price,
-        item.productId.name
+        item.productId.price * (item.quantity || 1),
+        `${item.productId.name} x${item.quantity || 1}`
       );
 
       const verifyRes = await fetch('http://localhost:3000/payment/verify', {
@@ -115,6 +150,7 @@ function Cart() {
             designJSON: item.designJSON,
             previewImage: item.previewImage,
             material: item.material,
+            quantity: item.quantity || 1,
           },
         }),
       });
@@ -145,8 +181,6 @@ function Cart() {
   };
 
   if (loading) return <p className="cart cart--loading">Loading cart...</p>;
-
-  const items = cart?.items || [];
   const total = items.reduce(
     (sum, item) => sum + (item.productId?.price || 0) * item.quantity,
     0
@@ -167,6 +201,12 @@ function Cart() {
         </div>
       ) : (
         <>
+          {hasOutOfStockItems && (
+            <div className="cart__notice cart__notice--warning">
+              Remove out-of-stock items before placing an order.
+            </div>
+          )}
+
           <div className="cart__items">
             {items.map((item) => (
               <article key={item._id} className="cart__item">
@@ -176,7 +216,37 @@ function Cart() {
                   <h4>{item.productId?.name}</h4>
                   <p>Rs {item.productId?.price}</p>
                   <p>Material: {item.material}</p>
-                  <p>Qty: {item.quantity}</p>
+                  <div className="cart__quantity">
+                    <span>Qty</span>
+                    <div className="cart__quantity-controls">
+                      <button
+                        type="button"
+                        className="cart__qty-btn"
+                        onClick={() => handleQuantityChange(item._id, (item.quantity || 1) - 1)}
+                        disabled={(item.quantity || 1) <= 1}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity || 1}
+                        onChange={(event) => handleQuantityChange(item._id, Number(event.target.value) || 1)}
+                        className="cart__qty-input"
+                      />
+                      <button
+                        type="button"
+                        className="cart__qty-btn"
+                        onClick={() => handleQuantityChange(item._id, (item.quantity || 1) + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <p className="cart__subtotal">Subtotal: Rs {(item.productId?.price || 0) * (item.quantity || 1)}</p>
+                  {item.productId?.isOutOfStock && (
+                    <p className="cart__stock cart__stock--out">Out of stock</p>
+                  )}
                 </div>
 
                 <div className="cart__item-actions">
@@ -186,9 +256,13 @@ function Cart() {
                   <button
                     className="cart__order-btn"
                     onClick={() => handleOrderNow(item)}
-                    disabled={orderingItemId === item._id}
+                    disabled={orderingItemId === item._id || item.productId?.isOutOfStock}
                   >
-                    {orderingItemId === item._id ? 'Processing...' : 'Order Now'}
+                    {item.productId?.isOutOfStock
+                      ? 'Unavailable'
+                      : orderingItemId === item._id
+                        ? 'Processing...'
+                        : 'Order Now'}
                   </button>
                 </div>
               </article>
@@ -200,9 +274,9 @@ function Cart() {
             <button
               className="cart__checkout-btn"
               onClick={handleCheckout}
-              disabled={checkingOut}
+              disabled={checkingOut || hasOutOfStockItems}
             >
-              {checkingOut ? 'Processing...' : `Pay Rs ${total}`}
+              {hasOutOfStockItems ? 'Remove unavailable items' : checkingOut ? 'Processing...' : `Pay Rs ${total}`}
             </button>
           </div>
         </>

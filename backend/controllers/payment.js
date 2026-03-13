@@ -67,6 +67,14 @@ module.exports.verifyAndFulfill = async (req, res) => {
         return res.status(400).json({ message: 'Cart is empty' });
       }
 
+      const unavailableItems = cart.items.filter((item) => item.productId?.isOutOfStock);
+      if (unavailableItems.length > 0) {
+        return res.status(400).json({
+          message: 'Remove out-of-stock products from your cart before checkout',
+          unavailableProductIds: unavailableItems.map((item) => item.productId?._id),
+        });
+      }
+
       const orders = await Promise.all(
         cart.items.map(item =>
           new Order({
@@ -91,15 +99,20 @@ module.exports.verifyAndFulfill = async (req, res) => {
     }
 
     if (type === 'single') {
-      const { productId, designJSON, previewImage, material } = singleItem;
+      const { productId, designJSON, previewImage, material, quantity } = singleItem;
+      const normalizedQuantity = Math.max(1, Number(quantity) || 1);
       const product = await Product.findById(productId);
       if (!product) return res.status(404).json({ message: 'Product not found' });
+      if (product.isOutOfStock) {
+        return res.status(400).json({ message: 'This product is out of stock' });
+      }
 
       const order = await new Order({
         userId: req.user._id,
         productId: product._id,
-        totalPrice: product.price,
+        totalPrice: product.price * normalizedQuantity,
         customization: { designJSON, previewImage, material: material || 'Cotton' },
+        quantity: normalizedQuantity,
         paymentId: razorpay_payment_id,
       }).save();
 

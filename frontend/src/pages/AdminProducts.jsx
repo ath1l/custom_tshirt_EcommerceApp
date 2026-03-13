@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/admin.css';
 
@@ -7,11 +7,26 @@ const EMPTY_FORM = {
   price: '',
   image: '',
   baseImage: '',
+  galleryImages: '',
   description: '',
   type: 'tshirt',
+  isOutOfStock: false,
 };
 
 const TYPE_LABELS = { tshirt: 'T-Shirt', hoodie: 'Hoodie', shirt: 'Shirt' };
+
+const parseGalleryImages = (value) =>
+  value
+    .split('\n')
+    .map((item) => item.trim())
+    .map((item) => {
+      if (!item) return '';
+      if (item.startsWith('http://') || item.startsWith('https://') || item.startsWith('/')) {
+        return item;
+      }
+      return `/${item}`;
+    })
+    .filter(Boolean);
 
 function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, submitLabel }) {
   const fields = [
@@ -32,6 +47,21 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
       ))}
 
       <div className="admin-form__field">
+        <label>Extra Gallery Images</label>
+        <textarea
+          name="galleryImages"
+          value={values.galleryImages}
+          onChange={onChange}
+          placeholder={'apparel/gallery/blue-hoodie-side.png\napparel/gallery/blue-hoodie-back.png'}
+          rows={5}
+        />
+        <small className="admin-form__hint">
+          Use `frontend/public/apparel/thumbnails` for product cards, `frontend/public/apparel/editor` for
+          customization images, and `frontend/public/apparel/gallery` for extra detail images.
+        </small>
+      </div>
+
+      <div className="admin-form__field">
         <label>Type</label>
         <select name="type" value={values.type} onChange={onChange}>
           <option value="tshirt">T-Shirt</option>
@@ -39,6 +69,16 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
           <option value="shirt">Shirt</option>
         </select>
       </div>
+
+      <label className="admin-form__checkbox">
+        <input
+          type="checkbox"
+          name="isOutOfStock"
+          checked={values.isOutOfStock}
+          onChange={onChange}
+        />
+        <span>Mark this product as out of stock</span>
+      </label>
 
       {error && <p className="admin-message admin-message--error">{error}</p>}
 
@@ -85,12 +125,14 @@ function AdminProducts() {
   const startEdit = (product) => {
     setEditingId(product._id);
     setForm({
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      baseImage: product.baseImage,
-      description: product.description,
+      name: product.name || '',
+      price: product.price || '',
+      image: product.image || '',
+      baseImage: product.baseImage || '',
+      galleryImages: (product.galleryImages || []).join('\n'),
+      description: product.description || '',
       type: product.type || 'tshirt',
+      isOutOfStock: Boolean(product.isOutOfStock),
     });
     setFormError('');
   };
@@ -110,7 +152,11 @@ function AdminProducts() {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, price: Number(form.price) }),
+        body: JSON.stringify({
+          ...form,
+          price: Number(form.price),
+          galleryImages: parseGalleryImages(form.galleryImages),
+        }),
       });
       if (!res.ok) throw new Error('Failed to update');
       cancelEdit();
@@ -135,6 +181,38 @@ function AdminProducts() {
     }
   };
 
+  const handleStockToggle = async (product) => {
+    try {
+      const res = await fetch(`http://localhost:3000/admin/products/${product._id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: product.name || '',
+          price: Number(product.price) || 0,
+          image: product.image || '',
+          baseImage: product.baseImage || '',
+          description: product.description || '',
+          type: product.type || 'tshirt',
+          galleryImages: product.galleryImages || [],
+          isOutOfStock: !product.isOutOfStock,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update stock status');
+      }
+
+      if (editingId === product._id) {
+        cancelEdit();
+      }
+
+      fetchProducts();
+    } catch (err) {
+      alert(err.message || 'Failed to update stock status');
+    }
+  };
+
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     setAddLoading(true);
@@ -144,7 +222,11 @@ function AdminProducts() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...addForm, price: Number(addForm.price) }),
+        body: JSON.stringify({
+          ...addForm,
+          price: Number(addForm.price),
+          galleryImages: parseGalleryImages(addForm.galleryImages),
+        }),
       });
       if (!res.ok) throw new Error('Failed to add product');
       setAddForm(EMPTY_FORM);
@@ -207,7 +289,12 @@ function AdminProducts() {
         <section className="admin-form-card">
           <ProductForm
             values={addForm}
-            onChange={(e) => setAddForm({ ...addForm, [e.target.name]: e.target.value })}
+            onChange={(e) =>
+              setAddForm({
+                ...addForm,
+                [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+              })
+            }
             onSubmit={handleAddSubmit}
             onCancel={() => {
               setShowAddForm(false);
@@ -236,7 +323,7 @@ function AdminProducts() {
             </thead>
             <tbody>
               {products.map((product) => (
-                <>
+                <Fragment key={product._id}>
                   <tr key={product._id}>
                     <td>
                       <img src={product.image} alt={product.name} className="admin-table__thumb" />
@@ -244,6 +331,7 @@ function AdminProducts() {
                     <td>
                       <strong>{product.name}</strong>
                       <p className="admin-table__sub">{product.description}</p>
+                      {product.isOutOfStock && <p className="admin-table__stock admin-table__stock--out">Out of stock</p>}
                     </td>
                     <td>{TYPE_LABELS[product.type] || product.type}</td>
                     <td>Rs. {product.price}</td>
@@ -257,6 +345,13 @@ function AdminProducts() {
                           {editingId === product._id ? 'Cancel' : 'Edit'}
                         </button>
                         <button
+                          onClick={() => handleStockToggle(product)}
+                          className={`admin-btn ${product.isOutOfStock ? 'admin-btn--success' : 'admin-btn--warning'}`}
+                          type="button"
+                        >
+                          {product.isOutOfStock ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                        <button
                           onClick={() => handleDelete(product._id, product.name)}
                           className="admin-btn admin-btn--danger"
                           type="button"
@@ -267,11 +362,16 @@ function AdminProducts() {
                     </td>
                   </tr>
                   {editingId === product._id && (
-                    <tr key={`edit-${product._id}`}>
+                    <tr>
                       <td colSpan={5} className="admin-table__edit-cell">
                         <ProductForm
                           values={form}
-                          onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+                            })
+                          }
                           onSubmit={handleEditSubmit}
                           onCancel={cancelEdit}
                           error={formError}
@@ -281,7 +381,7 @@ function AdminProducts() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

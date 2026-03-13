@@ -55,6 +55,8 @@ function Customize() {
   const [textColor, setTextColor] = useState("#000000");
   const [textFont, setTextFont] = useState("Arial");
   const [fontSize, setFontSize] = useState(24);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [productUnavailable, setProductUnavailable] = useState(false);
 
   const printArea = {
     width: 200,
@@ -67,44 +69,54 @@ function Customize() {
     if (fabricCanvasRef.current) return;
 
     const init = async () => {
-      const canvas = new fabric.Canvas(canvasRef.current, {
-        width: 400,
-        height: 500,
-        selection: true,
-      });
+      try {
+        const res = await fetch(`http://localhost:3000/products/${productId}`);
+        const product = await res.json();
+        productRef.current = product;
 
-      fabricCanvasRef.current = canvas;
+        if (product?.isOutOfStock) {
+          setProductUnavailable(true);
+          setLoadingProduct(false);
+          return;
+        }
 
-      const res = await fetch(`http://localhost:3000/products/${productId}`);
-      const product = await res.json();
-      productRef.current = product;
+        const canvas = new fabric.Canvas(canvasRef.current, {
+          width: 400,
+          height: 500,
+          selection: true,
+        });
 
-      const tshirt = await fabric.Image.fromURL(product.baseImage);
-      const scale = Math.min(canvas.width / tshirt.width, canvas.height / tshirt.height);
-      tshirt.scale(scale);
-      tshirt.set({ selectable: false, evented: false, hasControls: false, hasBorders: false });
-      canvas.add(tshirt);
-      canvas.centerObject(tshirt);
-      tshirt.setCoords();
+        fabricCanvasRef.current = canvas;
 
-      const guideRect = new fabric.Rect({
-        width: printArea.width,
-        height: printArea.height,
-        left: printArea.centerX,
-        top: printArea.centerY,
-        originX: "center",
-        originY: "center",
-        fill: "transparent",
-        stroke: "rgba(255, 255, 255, 0.5)",
-        strokeWidth: 2,
-        strokeDashArray: [10, 5],
-        selectable: false,
-        evented: false,
-        isPrintGuide: true,
-      });
+        const tshirt = await fabric.Image.fromURL(product.baseImage);
+        const scale = Math.min(canvas.width / tshirt.width, canvas.height / tshirt.height);
+        tshirt.scale(scale);
+        tshirt.set({ selectable: false, evented: false, hasControls: false, hasBorders: false });
+        canvas.add(tshirt);
+        canvas.centerObject(tshirt);
+        tshirt.setCoords();
 
-      canvas.add(guideRect);
-      canvas.requestRenderAll();
+        const guideRect = new fabric.Rect({
+          width: printArea.width,
+          height: printArea.height,
+          left: printArea.centerX,
+          top: printArea.centerY,
+          originX: "center",
+          originY: "center",
+          fill: "transparent",
+          stroke: "rgba(255, 255, 255, 0.5)",
+          strokeWidth: 2,
+          strokeDashArray: [10, 5],
+          selectable: false,
+          evented: false,
+          isPrintGuide: true,
+        });
+
+        canvas.add(guideRect);
+        canvas.requestRenderAll();
+      } finally {
+        setLoadingProduct(false);
+      }
     };
 
     init();
@@ -116,7 +128,7 @@ function Customize() {
   }, [productId]);
 
   const handleAddText = () => {
-    if (!textInput.trim()) return;
+    if (!textInput.trim() || !fabricCanvasRef.current) return;
 
     const text = new fabric.IText(textInput, {
       left: printArea.centerX,
@@ -156,6 +168,7 @@ function Customize() {
   };
 
   const handleImageUpload = async (e) => {
+    if (!fabricCanvasRef.current) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -199,6 +212,7 @@ function Customize() {
 
   const captureDesign = () => {
     const canvas = fabricCanvasRef.current;
+    if (!canvas) return { designJSON: null, previewImage: null };
     const guide = canvas.getObjects().find((obj) => obj.isPrintGuide);
     if (guide) guide.visible = false;
     canvas.requestRenderAll();
@@ -214,7 +228,7 @@ function Customize() {
 
   const handleOrderNow = async () => {
     const product = productRef.current;
-    if (!product) return;
+    if (!product || product.isOutOfStock) return;
 
     const { designJSON, previewImage } = captureDesign();
 
@@ -250,6 +264,7 @@ function Customize() {
   };
 
   const handleAddToCart = async () => {
+    if (productRef.current?.isOutOfStock) return;
     const { designJSON, previewImage } = captureDesign();
 
     try {
@@ -265,13 +280,39 @@ function Customize() {
         return;
       }
 
-      if (!res.ok) throw new Error("Failed to add to cart");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to add to cart");
+      }
       alert("Added to cart!");
     } catch (err) {
       console.error(err);
-      alert("Failed to add to cart. Are you logged in?");
+      alert(err.message || "Failed to add to cart.");
     }
   };
+
+  if (loadingProduct) {
+    return <main className="customize-page">Loading product...</main>;
+  }
+
+  if (productUnavailable) {
+    return (
+      <main className="customize-page">
+        <section className="customize-layout">
+          <div className="customize-canvas-panel">
+            <p className="customize-eyebrow">Design Studio</p>
+            <h2>Product unavailable</h2>
+            <p className="customize-copy">
+              This product is currently out of stock and cannot be customized right now.
+            </p>
+            <button onClick={() => navigate(`/products/${productId}`)} className="customize-primary-btn" type="button">
+              Back to product
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="customize-page">

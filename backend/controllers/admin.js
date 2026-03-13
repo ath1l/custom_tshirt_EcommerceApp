@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 module.exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
+      .sort({ createdAt: -1 })
       .populate('userId', 'username email')
       .populate('productId');
     res.json(orders);
@@ -41,8 +42,16 @@ module.exports.updateOrderStatus = async (req, res) => {
 
 module.exports.addProduct = async (req, res) => {
   try {
-    const { name, price, image, baseImage, description, type } = req.body;
-    const product = new Product({ name, price, image, baseImage, description });
+    const { name, price, image, baseImage, galleryImages, isOutOfStock, description, type } = req.body;
+    const product = new Product({
+      name,
+      price,
+      image,
+      baseImage,
+      galleryImages: Array.isArray(galleryImages) ? galleryImages : [],
+      isOutOfStock: Boolean(isOutOfStock),
+      description,
+    });
     product.type = type;  // set separately to avoid Mongoose's 'type' keyword conflict
     await product.save();
     res.json(product);
@@ -53,7 +62,7 @@ module.exports.addProduct = async (req, res) => {
 
 module.exports.editProduct = async (req, res) => {
   try {
-    const { name, price, image, baseImage, description, type } = req.body;
+    const { name, price, image, baseImage, galleryImages, isOutOfStock, description, type } = req.body;
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
@@ -61,6 +70,8 @@ module.exports.editProduct = async (req, res) => {
     product.price = price;
     product.image = image;
     product.baseImage = baseImage;
+    product.galleryImages = Array.isArray(galleryImages) ? galleryImages : [];
+    product.isOutOfStock = Boolean(isOutOfStock);
     product.description = description;
     product.type = type;
 

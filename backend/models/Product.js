@@ -10,6 +10,17 @@ const productSchema = new mongoose.Schema({
     // Base image used in Fabric canvas
     baseImage: String,
 
+    // Optional gallery images for the product detail page
+    galleryImages: {
+        type: [String],
+        default: [],
+    },
+
+    isOutOfStock: {
+        type: Boolean,
+        default: false,
+    },
+
     description: String,
 
      type: {

@@ -9,7 +9,11 @@ mongoose
     process.exit(1);
   });
 
-const tshirtBases = ["/tshirts/black.png", "/tshirts/red.png", "/tshirts/white.png"];
+const tshirtBases = [
+  "/apparel/editor/black.png",
+  "/apparel/editor/red.png",
+  "/apparel/editor/white.png",
+];
 
 const tshirtNames = [
   "Cotton Crew Neck T-Shirt",

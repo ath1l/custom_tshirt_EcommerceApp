@@ -3,8 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/product-detail.css';
 import { openRazorpayCheckout } from '../utils/razorpay';
 
-
-
 const typeLabels = {
   tshirt: 'T-Shirt',
   hoodie: 'Hoodie',
@@ -18,6 +16,8 @@ function ProductDetail() {
   const [similar, setSimilar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submittingAction, setSubmittingAction] = useState('');
+  const [selectedImage, setSelectedImage] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     let isCancelled = false;
@@ -39,6 +39,8 @@ function ProductDetail() {
         }
 
         setProduct(productData);
+        setSelectedImage(productData.image);
+        setQuantity(1);
 
         const similarRes = await fetch(`http://localhost:3000/products?type=${productData.type}`);
         if (!similarRes.ok) {
@@ -84,6 +86,8 @@ function ProductDetail() {
   }
 
   const displayType = typeLabels[product.type] || product.type;
+  const productImages = [product.image, ...(product.galleryImages || [])].filter(Boolean);
+  const isOutOfStock = Boolean(product.isOutOfStock);
   const highlights = [
     'Made for custom prints',
     'Soft everyday fabric feel',
@@ -92,9 +96,10 @@ function ProductDetail() {
 
   const basePayload = {
     productId: product._id,
-    designJSON: null,
-    previewImage: product.image,
+    designJSON: { version: '7.1.0', objects: [] },
+    previewImage: selectedImage || product.image,
     material: 'Cotton',
+    quantity,
   };
 
   const handleAddToCart = async () => {
@@ -113,12 +118,13 @@ function ProductDetail() {
       }
 
       if (!response.ok) {
-        throw new Error('Failed to add to cart');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to add to cart');
       }
 
       alert('Added to cart successfully.');
-    } catch {
-      alert('Failed to add to cart. Please log in and try again.');
+    } catch (error) {
+      alert(error.message || 'Failed to add to cart.');
     } finally {
       setSubmittingAction('');
     }
@@ -128,7 +134,7 @@ function ProductDetail() {
   try {
     setSubmittingAction('order');
 
-    const paymentResponse = await openRazorpayCheckout(product.price, product.name);
+    const paymentResponse = await openRazorpayCheckout(product.price * quantity, `${product.name} x${quantity}`);
 
     const verifyRes = await fetch('http://localhost:3000/payment/verify', {
       method: 'POST',
@@ -169,11 +175,27 @@ function ProductDetail() {
           </button>
           <div className="product-detail__image-shell">
             <img
-              src={product.image}
+              src={selectedImage || product.image}
               alt={product.name}
               className="product-detail__image"
             />
           </div>
+          {productImages.length > 1 && (
+            <div className="product-detail__gallery">
+              {productImages.map((image, index) => (
+                <button
+                  key={`${image}-${index}`}
+                  type="button"
+                  className={`product-detail__gallery-thumb ${
+                    image === (selectedImage || product.image) ? 'product-detail__gallery-thumb--active' : ''
+                  }`}
+                  onClick={() => setSelectedImage(image)}
+                >
+                  <img src={image} alt={`${product.name} view ${index + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="product-detail__content">
@@ -184,31 +206,64 @@ function ProductDetail() {
             {product.description || 'A clean base product designed for custom styling and daily wear.'}
           </p>
 
+          <div className="product-detail__quantity">
+            <span>Quantity</span>
+            <div className="product-detail__quantity-controls">
+              <button
+                type="button"
+                className="product-detail__qty-btn"
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                disabled={submittingAction !== '' || quantity <= 1}
+              >
+                -
+              </button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))}
+                className="product-detail__qty-input"
+                disabled={submittingAction !== ''}
+              />
+              <button
+                type="button"
+                className="product-detail__qty-btn"
+                onClick={() => setQuantity((current) => current + 1)}
+                disabled={submittingAction !== ''}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           <div className="product-detail__actions">
             <button
               type="button"
               className="product-detail__secondary-btn"
               onClick={() => navigate(`/customize/${product._id}`)}
+              disabled={isOutOfStock || submittingAction !== ''}
             >
-              Customize
+              {isOutOfStock ? 'Out of Stock' : 'Customize'}
             </button>
             <button
               type="button"
               className="product-detail__ghost-btn"
               onClick={handleAddToCart}
-              disabled={submittingAction !== ''}
+              disabled={isOutOfStock || submittingAction !== ''}
             >
-              {submittingAction === 'cart' ? 'Adding...' : 'Add to Cart'}
+              {isOutOfStock ? 'Unavailable' : submittingAction === 'cart' ? 'Adding...' : 'Add to Cart'}
             </button>
             <button
               type="button"
               className="product-detail__primary-btn"
               onClick={handleOrderNow}
-              disabled={submittingAction !== ''}
+              disabled={isOutOfStock || submittingAction !== ''}
             >
-              {submittingAction === 'order' ? 'Placing Order...' : 'Order Now'}
+              {isOutOfStock ? 'Unavailable' : submittingAction === 'order' ? 'Placing Order...' : 'Order Now'}
             </button>
           </div>
+
+          {isOutOfStock && <p className="product-detail__stock-note">This product is currently out of stock.</p>}
 
           <div className="product-detail__meta-grid">
             <article>

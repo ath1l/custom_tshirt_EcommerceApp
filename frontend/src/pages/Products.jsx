@@ -100,6 +100,7 @@ function Products() {
               }}
             >
               <img src={product.image} alt={product.name} className="products-card-image" />
+              {product.isOutOfStock && <span className="products-card__badge">Out of stock</span>}
               <h3>{product.name}</h3>
               <p className="products-price">Rs. {product.price}</p>
               <p className="products-description">{product.description}</p>
@@ -110,7 +111,7 @@ function Products() {
                 }}
                 type="button"
               >
-                View Product
+                {product.isOutOfStock ? 'View Details' : 'View Product'}
               </button>
             </div>
           ))}

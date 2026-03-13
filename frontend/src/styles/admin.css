@@ -76,6 +76,16 @@
   color: #ffffff;
 }
 
+.admin-btn--warning {
+  background: #fff4db;
+  color: #8c651c;
+}
+
+.admin-btn--success {
+  background: #edf8ef;
+  color: #2f7a40;
+}
+
 .admin-btn:disabled {
   opacity: 0.7;
   cursor: wait;
@@ -221,13 +231,40 @@
   color: #4b5563;
 }
 
+.admin-form__hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.admin-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.admin-form__checkbox input {
+  width: auto;
+}
+
 .admin-form__field input,
-.admin-form__field select {
+.admin-form__field select,
+.admin-form__field textarea {
   width: 100%;
   border: 1px solid #d6dfd3;
   border-radius: 12px;
   padding: 0.8rem 0.9rem;
   background: #ffffff;
+}
+
+.admin-form__field textarea {
+  min-height: 120px;
+  resize: vertical;
+  font: inherit;
 }
 
 .admin-message {
@@ -269,6 +306,16 @@
   margin: 0.3rem 0 0;
   color: #6b7280;
   font-size: 0.88rem;
+}
+
+.admin-table__stock {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-table__stock--out {
+  color: #c24141;
 }
 
 .admin-table__edit-cell {
