@@ -1,6 +1,23 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
+const normalizeAssetPath = (value) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  const normalized = trimmed.replace(/\\/g, '/');
+  return normalized.startsWith('/') ? normalized : `/${normalized}`;
+};
+
+const normalizeAssetList = (value) =>
+  Array.isArray(value)
+    ? value.map(normalizeAssetPath).filter(Boolean)
+    : [];
+
 module.exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -46,9 +63,9 @@ module.exports.addProduct = async (req, res) => {
     const product = new Product({
       name,
       price,
-      image,
-      baseImage,
-      galleryImages: Array.isArray(galleryImages) ? galleryImages : [],
+      image: normalizeAssetPath(image),
+      baseImage: normalizeAssetPath(baseImage),
+      galleryImages: normalizeAssetList(galleryImages),
       isOutOfStock: Boolean(isOutOfStock),
       description,
     });
@@ -68,9 +85,9 @@ module.exports.editProduct = async (req, res) => {
 
     product.name = name;
     product.price = price;
-    product.image = image;
-    product.baseImage = baseImage;
-    product.galleryImages = Array.isArray(galleryImages) ? galleryImages : [];
+    product.image = normalizeAssetPath(image);
+    product.baseImage = normalizeAssetPath(baseImage);
+    product.galleryImages = normalizeAssetList(galleryImages);
     product.isOutOfStock = Boolean(isOutOfStock);
     product.description = description;
     product.type = type;

@@ -3,11 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/product-detail.css';
 import { openRazorpayCheckout } from '../utils/razorpay';
 
+const DETAIL_DESCRIPTION_LIMIT = 180;
+const SIMILAR_DESCRIPTION_LIMIT = 78;
+
 const typeLabels = {
   tshirt: 'T-Shirt',
   hoodie: 'Hoodie',
   shirt: 'Shirt',
 };
+
+function truncateText(text, limit, fallback) {
+  const resolvedText = text || fallback;
+
+  if (resolvedText.length <= limit) {
+    return resolvedText;
+  }
+
+  return `${resolvedText.slice(0, limit).trimEnd()}...`;
+}
 
 function ProductDetail() {
   const { productId } = useParams();
@@ -18,6 +31,7 @@ function ProductDetail() {
   const [submittingAction, setSubmittingAction] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -39,8 +53,9 @@ function ProductDetail() {
         }
 
         setProduct(productData);
-        setSelectedImage(productData.image);
+        setSelectedImage(productData.baseImage || productData.image);
         setQuantity(1);
+        setShowFullDescription(false);
 
         const similarRes = await fetch(`http://localhost:3000/products?type=${productData.type}`);
         if (!similarRes.ok) {
@@ -86,7 +101,7 @@ function ProductDetail() {
   }
 
   const displayType = typeLabels[product.type] || product.type;
-  const productImages = [product.image, ...(product.galleryImages || [])].filter(Boolean);
+  const productImages = [product.baseImage || product.image, ...(product.galleryImages || [])].filter(Boolean);
   const isOutOfStock = Boolean(product.isOutOfStock);
   const highlights = [
     'Made for custom prints',
@@ -97,10 +112,14 @@ function ProductDetail() {
   const basePayload = {
     productId: product._id,
     designJSON: { version: '7.1.0', objects: [] },
-    previewImage: selectedImage || product.image,
+    previewImage: selectedImage || product.baseImage || product.image,
     material: 'Cotton',
     quantity,
   };
+
+  const descriptionFallback = 'A clean base product designed for custom styling and daily wear.';
+  const descriptionText = product.description || descriptionFallback;
+  const shouldCollapseDescription = descriptionText.length > DETAIL_DESCRIPTION_LIMIT;
 
   const handleAddToCart = async () => {
     try {
@@ -175,7 +194,7 @@ function ProductDetail() {
           </button>
           <div className="product-detail__image-shell">
             <img
-              src={selectedImage || product.image}
+              src={selectedImage || product.baseImage || product.image}
               alt={product.name}
               className="product-detail__image"
             />
@@ -187,7 +206,7 @@ function ProductDetail() {
                   key={`${image}-${index}`}
                   type="button"
                   className={`product-detail__gallery-thumb ${
-                    image === (selectedImage || product.image) ? 'product-detail__gallery-thumb--active' : ''
+                    image === (selectedImage || product.baseImage || product.image) ? 'product-detail__gallery-thumb--active' : ''
                   }`}
                   onClick={() => setSelectedImage(image)}
                 >
@@ -202,9 +221,22 @@ function ProductDetail() {
           <p className="product-detail__eyebrow">{displayType} collection</p>
           <h1>{product.name}</h1>
           <p className="product-detail__price">Rs. {product.price}</p>
-          <p className="product-detail__description">
-            {product.description || 'A clean base product designed for custom styling and daily wear.'}
-          </p>
+          <div className="product-detail__description-block">
+            <p className="product-detail__description">
+              {showFullDescription || !shouldCollapseDescription
+                ? descriptionText
+                : truncateText(product.description, DETAIL_DESCRIPTION_LIMIT, descriptionFallback)}
+            </p>
+            {shouldCollapseDescription && (
+              <button
+                type="button"
+                className="product-detail__description-toggle"
+                onClick={() => setShowFullDescription((current) => !current)}
+              >
+                {showFullDescription ? 'Less' : 'More'}
+              </button>
+            )}
+          </div>
 
           <div className="product-detail__quantity">
             <span>Quantity</span>
@@ -330,7 +362,7 @@ function ProductDetail() {
                 <img src={item.image} alt={item.name} />
                 <div>
                   <h3>{item.name}</h3>
-                  <p>{item.description || 'Customizable apparel with a clean finish.'}</p>
+                  <p>{truncateText(item.description, SIMILAR_DESCRIPTION_LIMIT, 'Customizable apparel with a clean finish.')}</p>
                   <strong>Rs. {item.price}</strong>
                 </div>
               </article>
