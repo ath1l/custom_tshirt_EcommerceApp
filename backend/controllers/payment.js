@@ -84,6 +84,10 @@ module.exports.verifyAndFulfill = async (req, res) => {
             customization: {
               designJSON: item.designJSON,
               previewImage: item.previewImage,
+              previewImages: {
+                front: item.previewImages?.front || '',
+                back: item.previewImages?.back || '',
+              },
               material: item.material,
             },
             quantity: item.quantity || 1,
@@ -99,7 +103,7 @@ module.exports.verifyAndFulfill = async (req, res) => {
     }
 
     if (type === 'single') {
-      const { productId, designJSON, previewImage, material, quantity } = singleItem;
+      const { productId, designJSON, previewImage, previewImages, material, quantity } = singleItem;
       const normalizedQuantity = Math.max(1, Number(quantity) || 1);
       const product = await Product.findById(productId);
       if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -111,7 +115,15 @@ module.exports.verifyAndFulfill = async (req, res) => {
         userId: req.user._id,
         productId: product._id,
         totalPrice: product.price * normalizedQuantity,
-        customization: { designJSON, previewImage, material: material || 'Cotton' },
+        customization: {
+          designJSON,
+          previewImage,
+          previewImages: {
+            front: previewImages?.front || '',
+            back: previewImages?.back || '',
+          },
+          material: material || 'Cotton',
+        },
         quantity: normalizedQuantity,
         paymentId: razorpay_payment_id,
       }).save();

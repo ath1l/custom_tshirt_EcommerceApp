@@ -12,6 +12,14 @@ const typeLabels = {
   shirt: 'Shirt',
 };
 
+const formatCategoryLabel = (value) =>
+  typeLabels[value]
+  || String(value || '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
 function truncateText(text, limit, fallback) {
   const resolvedText = text || fallback;
 
@@ -20,6 +28,14 @@ function truncateText(text, limit, fallback) {
   }
 
   return `${resolvedText.slice(0, limit).trimEnd()}...`;
+}
+
+function deriveBackImage(frontImage) {
+  if (!frontImage || typeof frontImage !== 'string') {
+    return '';
+  }
+
+  return frontImage.replace('/apparel/editor/', '/apparel/editor back/');
 }
 
 function ProductDetail() {
@@ -100,8 +116,14 @@ function ProductDetail() {
     );
   }
 
-  const displayType = typeLabels[product.type] || product.type;
-  const productImages = [product.baseImage || product.image, ...(product.galleryImages || [])].filter(Boolean);
+  const displayType = formatCategoryLabel(product.type);
+  const productImages = [
+    product.baseImage || product.image,
+    product.backImage || deriveBackImage(product.baseImage),
+    ...(product.galleryImages || []),
+  ]
+    .filter(Boolean)
+    .filter((image, index, images) => images.indexOf(image) === index);
   const isOutOfStock = Boolean(product.isOutOfStock);
   const highlights = [
     'Made for custom prints',

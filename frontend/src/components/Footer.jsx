@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import "../styles/footer.css";
 
 const YEAR = new Date().getFullYear();
@@ -8,26 +7,26 @@ const NAV_COLUMNS = [
     heading: "Shop",
     links: [
       { label: "All Products", to: "/products" },
-      { label: "Customize", to: "/products" },
-      { label: "Cart", to: "/cart" },
-      { label: "My Orders", to: "/orders" },
+      { label: "Customize", to: "/#customize" },
+      { label: "Cart", to: "/#cart" },
+      { label: "My Orders", to: "/#orders" },
     ],
   },
   {
     heading: "Account",
     links: [
-      { label: "Login", to: "/login" },
-      { label: "Register", to: "/register" },
-      { label: "Profile", to: "/profile" },
+      { label: "Login", to: "/#login" },
+      { label: "Register", to: "/#register" },
+      { label: "Profile", to: "/#profile" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { label: "About Us", to: "/" },
-      { label: "Contact", to: "/" },
-      { label: "Privacy Policy", to: "/" },
-      { label: "Terms of Service", to: "/" },
+      { label: "About Us", to: "/info#about" },
+      { label: "Contact", to: "/info#contact" },
+      { label: "Privacy Policy", to: "/info#privacy" },
+      { label: "Terms of Service", to: "/info#terms" },
     ],
   },
 ];
@@ -40,9 +39,9 @@ export default function Footer() {
 
         {/* brand block */}
         <div className="footer__brand">
-          <Link to="/" className="footer__logo">
+          <a href="/" className="footer__logo">
             Custo<span>Me</span>
-          </Link>
+          </a>
           <p className="footer__tagline">
             Your vision, your fabric, your rules. Design custom apparel that
             says exactly what you mean.
@@ -56,7 +55,7 @@ export default function Footer() {
             <ul className="footer__col-links">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <Link to={l.to} className="footer__link">{l.label}</Link>
+                  <a href={l.to} className="footer__link">{l.label}</a>
                 </li>
               ))}
             </ul>

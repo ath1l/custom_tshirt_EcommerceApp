@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { openRazorpayCheckout } from "../utils/razorpay";
+import { buildCustomizationPreview, deriveBackImage } from "../utils/customizationPreview";
 import "../styles/customize.css";
 
 const renderIcon = (ctx, left, top, styleOverride, fabricObject) => {
@@ -43,12 +44,48 @@ const FONTS = [
   "Comic Sans MS",
 ];
 
+const DEFAULT_SIDE = "front";
+const PRINT_AREA = {
+  width: 200,
+  height: 300,
+  centerX: 400 / 2,
+  centerY: 500 / 2 + 40,
+};
+
+function getInitialSideDesigns(designJSON) {
+  if (designJSON?.sides) {
+    return {
+      front: designJSON.sides.front || [],
+      back: designJSON.sides.back || [],
+    };
+  }
+
+  if (Array.isArray(designJSON?.objects)) {
+    return {
+      front: designJSON.objects,
+      back: [],
+    };
+  }
+
+  return { front: [], back: [] };
+}
+
+function getInitialActiveSide(designJSON) {
+  if (designJSON?.activeSide === "back") {
+    return "back";
+  }
+
+  return DEFAULT_SIDE;
+}
+
 function Customize() {
   const { productId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const productRef = useRef(null);
+  const sideDesignsRef = useRef({ front: null, back: null });
 
   const [material, setMaterial] = useState("Cotton");
   const [textInput, setTextInput] = useState("");
@@ -57,12 +94,117 @@ function Customize() {
   const [fontSize, setFontSize] = useState(24);
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [productUnavailable, setProductUnavailable] = useState(false);
+  const [activeSide, setActiveSide] = useState(DEFAULT_SIDE);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const cartItemId = location.state?.cartItemId || "";
+  const existingCartItem = location.state?.cartItem || null;
 
-  const printArea = {
-    width: 200,
-    height: 300,
-    centerX: 400 / 2,
-    centerY: 500 / 2 + 40,
+  const getSideImage = useCallback((product, side) => {
+    if (!product) {
+      return "";
+    }
+
+    if (side === "back") {
+      return product.backImage || deriveBackImage(product.baseImage) || product.baseImage || product.image;
+    }
+
+    return product.baseImage || product.image;
+  }, []);
+
+  const saveCurrentSideDesign = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const objects = canvas
+      .getObjects()
+      .filter((obj) => !obj.isBackgroundImage && !obj.isPrintGuide)
+      .map((obj) => obj.toObject(["clipPath"]));
+
+    sideDesignsRef.current[activeSide] = objects;
+  }, [activeSide]);
+
+  const loadSideOnCanvas = useCallback(async (side, product) => {
+    const canvas = fabricCanvasRef.current;
+    const sideImage = getSideImage(product, side);
+    if (!canvas || !sideImage) {
+      return;
+    }
+
+    canvas.clear();
+
+    const tshirt = await fabric.Image.fromURL(sideImage);
+    const scale = Math.min(canvas.width / tshirt.width, canvas.height / tshirt.height);
+    tshirt.scale(scale);
+    tshirt.set({
+      selectable: false,
+      evented: false,
+      hasControls: false,
+      hasBorders: false,
+      isBackgroundImage: true,
+    });
+    canvas.add(tshirt);
+    canvas.centerObject(tshirt);
+    tshirt.setCoords();
+
+    const guideRect = new fabric.Rect({
+      width: PRINT_AREA.width,
+      height: PRINT_AREA.height,
+      left: PRINT_AREA.centerX,
+      top: PRINT_AREA.centerY,
+      originX: "center",
+      originY: "center",
+      fill: "transparent",
+      stroke: "rgba(255, 255, 255, 0.5)",
+      strokeWidth: 2,
+      strokeDashArray: [10, 5],
+      selectable: false,
+      evented: false,
+      isPrintGuide: true,
+    });
+
+    canvas.add(guideRect);
+
+    const savedObjects = sideDesignsRef.current[side] || [];
+    for (const objectData of savedObjects) {
+      const restoredObject = await fabric.util.enlivenObjects([objectData]);
+      restoredObject.forEach((item) => {
+        item.controls.deleteControl = new fabric.Control({
+          x: 0.5,
+          y: -0.5,
+          cursorStyle: "pointer",
+          mouseUpHandler: deleteObject,
+          render: renderIcon,
+          cornerSize: 24,
+        });
+        canvas.add(item);
+      });
+    }
+
+    canvas.requestRenderAll();
+  }, [getSideImage]);
+
+  const buildClipRect = () =>
+    new fabric.Rect({
+      width: PRINT_AREA.width,
+      height: PRINT_AREA.height,
+      left: PRINT_AREA.centerX,
+      top: PRINT_AREA.centerY,
+      originX: "center",
+      originY: "center",
+      absolutePositioned: true,
+    });
+
+  const attachDeleteControl = (fabricObject) => {
+    fabricObject.controls.deleteControl = new fabric.Control({
+      x: 0.5,
+      y: -0.5,
+      cursorStyle: "pointer",
+      mouseUpHandler: deleteObject,
+      render: renderIcon,
+      cornerSize: 24,
+    });
   };
 
   useEffect(() => {
@@ -73,6 +215,7 @@ function Customize() {
         const res = await fetch(`http://localhost:3000/products/${productId}`);
         const product = await res.json();
         productRef.current = product;
+        sideDesignsRef.current = getInitialSideDesigns(existingCartItem?.designJSON);
 
         if (product?.isOutOfStock) {
           setProductUnavailable(true);
@@ -87,33 +230,10 @@ function Customize() {
         });
 
         fabricCanvasRef.current = canvas;
-
-        const tshirt = await fabric.Image.fromURL(product.baseImage);
-        const scale = Math.min(canvas.width / tshirt.width, canvas.height / tshirt.height);
-        tshirt.scale(scale);
-        tshirt.set({ selectable: false, evented: false, hasControls: false, hasBorders: false });
-        canvas.add(tshirt);
-        canvas.centerObject(tshirt);
-        tshirt.setCoords();
-
-        const guideRect = new fabric.Rect({
-          width: printArea.width,
-          height: printArea.height,
-          left: printArea.centerX,
-          top: printArea.centerY,
-          originX: "center",
-          originY: "center",
-          fill: "transparent",
-          stroke: "rgba(255, 255, 255, 0.5)",
-          strokeWidth: 2,
-          strokeDashArray: [10, 5],
-          selectable: false,
-          evented: false,
-          isPrintGuide: true,
-        });
-
-        canvas.add(guideRect);
-        canvas.requestRenderAll();
+        const initialSide = getInitialActiveSide(existingCartItem?.designJSON);
+        setActiveSide(initialSide);
+        setMaterial(existingCartItem?.material || "Cotton");
+        await loadSideOnCanvas(initialSide, product);
       } finally {
         setLoadingProduct(false);
       }
@@ -125,14 +245,24 @@ function Customize() {
       fabricCanvasRef.current?.dispose();
       fabricCanvasRef.current = null;
     };
-  }, [productId]);
+  }, [existingCartItem?.designJSON, existingCartItem?.material, loadSideOnCanvas, productId]);
+
+  const handleSideChange = async (side) => {
+    if (side === activeSide || !productRef.current) {
+      return;
+    }
+
+    saveCurrentSideDesign();
+    setActiveSide(side);
+    await loadSideOnCanvas(side, productRef.current);
+  };
 
   const handleAddText = () => {
     if (!textInput.trim() || !fabricCanvasRef.current) return;
 
     const text = new fabric.IText(textInput, {
-      left: printArea.centerX,
-      top: printArea.centerY,
+      left: PRINT_AREA.centerX,
+      top: PRINT_AREA.centerY,
       originX: "center",
       originY: "center",
       fontFamily: textFont,
@@ -141,29 +271,13 @@ function Customize() {
       editable: true,
     });
 
-    const clipRect = new fabric.Rect({
-      width: printArea.width,
-      height: printArea.height,
-      left: printArea.centerX,
-      top: printArea.centerY,
-      originX: "center",
-      originY: "center",
-      absolutePositioned: true,
-    });
-    text.clipPath = clipRect;
-
-    text.controls.deleteControl = new fabric.Control({
-      x: 0.5,
-      y: -0.5,
-      cursorStyle: "pointer",
-      mouseUpHandler: deleteObject,
-      render: renderIcon,
-      cornerSize: 24,
-    });
+    text.clipPath = buildClipRect();
+    attachDeleteControl(text);
 
     fabricCanvasRef.current.add(text);
     fabricCanvasRef.current.setActiveObject(text);
     fabricCanvasRef.current.requestRenderAll();
+    saveCurrentSideDesign();
     setTextInput("");
   };
 
@@ -171,6 +285,7 @@ function Customize() {
     if (!fabricCanvasRef.current) return;
     const file = e.target.files[0];
     if (!file) return;
+    setUploadedFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = async () => {
@@ -183,54 +298,73 @@ function Customize() {
         originY: "center",
       });
 
-      const clipRect = new fabric.Rect({
-        width: printArea.width,
-        height: printArea.height,
-        left: printArea.centerX,
-        top: printArea.centerY,
-        originX: "center",
-        originY: "center",
-        absolutePositioned: true,
-      });
-      img.clipPath = clipRect;
-
-      img.controls.deleteControl = new fabric.Control({
-        x: 0.5,
-        y: -0.5,
-        cursorStyle: "pointer",
-        mouseUpHandler: deleteObject,
-        render: renderIcon,
-        cornerSize: 24,
-      });
+      img.clipPath = buildClipRect();
+      attachDeleteControl(img);
 
       fabricCanvasRef.current.add(img);
       fabricCanvasRef.current.setActiveObject(img);
       fabricCanvasRef.current.requestRenderAll();
+      saveCurrentSideDesign();
     };
     reader.readAsDataURL(file);
   };
 
-  const captureDesign = () => {
+  const captureDesign = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return { designJSON: null, previewImage: null };
+    saveCurrentSideDesign();
     const guide = canvas.getObjects().find((obj) => obj.isPrintGuide);
     if (guide) guide.visible = false;
     canvas.requestRenderAll();
 
-    const designJSON = canvas.toJSON();
+    const designJSON = {
+      activeSide,
+      sides: sideDesignsRef.current,
+    };
     const previewImage = canvas.toDataURL({ format: "png", multiplier: 2 });
 
     if (guide) guide.visible = true;
     canvas.requestRenderAll();
 
     return { designJSON, previewImage };
-  };
+  }, [activeSide, saveCurrentSideDesign]);
+
+  const buildSidePreview = useCallback(async (side) => {
+    const product = productRef.current;
+    const sideImage = getSideImage(product, side);
+    if (!product || !sideImage) {
+      return "";
+    }
+
+    return await buildCustomizationPreview(
+      product,
+      { sides: sideDesignsRef.current },
+      side,
+    );
+  }, [getSideImage]);
+
+  const captureCustomization = useCallback(async () => {
+    const { designJSON, previewImage } = captureDesign();
+    const [frontPreview, backPreview] = await Promise.all([
+      buildSidePreview("front"),
+      buildSidePreview("back"),
+    ]);
+
+    return {
+      designJSON,
+      previewImage,
+      previewImages: {
+        front: frontPreview,
+        back: backPreview,
+      },
+    };
+  }, [buildSidePreview, captureDesign]);
 
   const handleOrderNow = async () => {
     const product = productRef.current;
     if (!product || product.isOutOfStock) return;
 
-    const { designJSON, previewImage } = captureDesign();
+    const { designJSON, previewImage, previewImages } = await captureCustomization();
 
     try {
       const paymentResponse = await openRazorpayCheckout(product.price, product.name);
@@ -242,7 +376,7 @@ function Customize() {
         body: JSON.stringify({
           ...paymentResponse,
           type: "single",
-          singleItem: { productId, designJSON, previewImage, material },
+          singleItem: { productId, designJSON, previewImage, previewImages, material },
         }),
       });
 
@@ -265,15 +399,25 @@ function Customize() {
 
   const handleAddToCart = async () => {
     if (productRef.current?.isOutOfStock) return;
-    const { designJSON, previewImage } = captureDesign();
+    const { designJSON, previewImage, previewImages } = await captureCustomization();
 
     try {
-      const res = await fetch("http://localhost:3000/cart", {
-        method: "POST",
+      const res = await fetch(
+        cartItemId ? `http://localhost:3000/cart/item/${cartItemId}` : "http://localhost:3000/cart",
+        {
+        method: cartItemId ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, designJSON, previewImage, material }),
-      });
+        body: JSON.stringify({
+          productId,
+          designJSON,
+          previewImage,
+          previewImages,
+          material,
+          quantity: existingCartItem?.quantity || 1,
+        }),
+        },
+      );
 
       if (res.status === 401) {
         navigate('/login');
@@ -284,10 +428,13 @@ function Customize() {
         const errorData = await res.json().catch(() => null);
         throw new Error(errorData?.message || "Failed to add to cart");
       }
-      alert("Added to cart!");
+      alert(cartItemId ? "Customization updated in cart!" : "Added to cart!");
+      if (cartItemId) {
+        navigate('/cart');
+      }
     } catch (err) {
       console.error(err);
-      alert(err.message || "Failed to add to cart.");
+      alert(err.message || (cartItemId ? "Failed to update cart item." : "Failed to add to cart."));
     }
   };
 
@@ -314,6 +461,9 @@ function Customize() {
     );
   }
 
+  const frontPreviewImage = getSideImage(productRef.current, "front");
+  const backPreviewImage = getSideImage(productRef.current, "back");
+
   return (
     <main className="customize-page">
       <section className="customize-layout">
@@ -323,6 +473,24 @@ function Customize() {
           <p className="customize-copy">
             Add text, upload artwork, and prepare the final design before adding it to cart or paying now.
           </p>
+          <div className="customize-side-picker" role="tablist" aria-label="Design side selector">
+            <button
+              type="button"
+              className={`customize-side-card ${activeSide === "front" ? "is-active" : ""}`}
+              onClick={() => handleSideChange("front")}
+            >
+              <img src={frontPreviewImage} alt="Front design view" />
+              <span>Front</span>
+            </button>
+            <button
+              type="button"
+              className={`customize-side-card ${activeSide === "back" ? "is-active" : ""}`}
+              onClick={() => handleSideChange("back")}
+            >
+              <img src={backPreviewImage} alt="Back design view" />
+              <span>Back</span>
+            </button>
+          </div>
           <div className="customize-canvas-shell">
             <canvas ref={canvasRef} className="customize-canvas" />
           </div>
@@ -388,7 +556,19 @@ function Customize() {
 
           <section className="customize-card">
             <h3>Upload Image</h3>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="customize-file" />
+            <label className="customize-upload-field" htmlFor="design-upload">
+              <span className="customize-upload-btn">Choose image</span>
+              <span className="customize-upload-name">
+                {uploadedFileName || "PNG, JPG, or WEBP"}
+              </span>
+            </label>
+            <input
+              id="design-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="customize-file"
+            />
           </section>
 
           <div className="customize-actions">

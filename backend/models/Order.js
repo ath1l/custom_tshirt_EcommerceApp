@@ -20,6 +20,16 @@ const orderSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
+    previewImages: {
+      front: {
+        type: String,
+        default: '',
+      },
+      back: {
+        type: String,
+        default: '',
+      },
+    },
     material: {
       type: String,
       enum: ['Cotton', 'Cotton-Poly Blend', 'Polyester'],

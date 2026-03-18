@@ -1,19 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { openRazorpayCheckout } from '../utils/razorpay';
+import { buildCustomizationPreview } from '../utils/customizationPreview';
 import '../styles/cart.css';
+
+const TYPE_LABELS = {
+  tshirt: 'T-Shirt',
+  hoodie: 'Hoodie',
+  shirt: 'Shirt',
+};
 
 function Cart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
   const [orderingItemId, setOrderingItemId] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItemPreviews, setSelectedItemPreviews] = useState({ front: '', back: '' });
   const navigate = useNavigate();
   const items = cart?.items || [];
   const outOfStockItems = items.filter((item) => item.productId?.isOutOfStock);
   const hasOutOfStockItems = outOfStockItems.length > 0;
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:3000/cart', { credentials: 'include' });
 
@@ -30,11 +39,37 @@ function Cart() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadModalPreviews = async () => {
+      if (!selectedItem) {
+        setSelectedItemPreviews({ front: '', back: '' });
+        return;
+      }
+
+      const front = selectedItem.previewImages?.front
+        || await buildCustomizationPreview(selectedItem.productId, selectedItem.designJSON, 'front');
+      const back = selectedItem.previewImages?.back
+        || await buildCustomizationPreview(selectedItem.productId, selectedItem.designJSON, 'back');
+
+      if (!isCancelled) {
+        setSelectedItemPreviews({ front, back });
+      }
+    };
+
+    loadModalPreviews();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedItem]);
 
   const handleRemove = async (itemId) => {
     try {
@@ -149,6 +184,7 @@ function Cart() {
             productId: item.productId._id,
             designJSON: item.designJSON,
             previewImage: item.previewImage,
+            previewImages: item.previewImages,
             material: item.material,
             quantity: item.quantity || 1,
           },
@@ -209,14 +245,25 @@ function Cart() {
 
           <div className="cart__items">
             {items.map((item) => (
-              <article key={item._id} className="cart__item">
+              <article
+                key={item._id}
+                className="cart__item"
+                onClick={() => setSelectedItem(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setSelectedItem(item);
+                  }
+                }}
+              >
                 <img src={item.previewImage} alt="design preview" className="cart__item-image" />
 
                 <div className="cart__item-details">
                   <h4>{item.productId?.name}</h4>
                   <p>Rs {item.productId?.price}</p>
                   <p>Material: {item.material}</p>
-                  <div className="cart__quantity">
+                  <div className="cart__quantity" onClick={(event) => event.stopPropagation()}>
                     <span>Qty</span>
                     <div className="cart__quantity-controls">
                       <button
@@ -249,9 +296,19 @@ function Cart() {
                   )}
                 </div>
 
-                <div className="cart__item-actions">
+                <div className="cart__item-actions" onClick={(event) => event.stopPropagation()}>
                   <button className="cart__remove-btn" onClick={() => handleRemove(item._id)}>
                     Remove
+                  </button>
+                  <button
+                    className="cart__edit-btn"
+                    onClick={() =>
+                      navigate(`/customize/${item.productId?._id}`, {
+                        state: { cartItemId: item._id, cartItem: item },
+                      })
+                    }
+                  >
+                    Edit Design
                   </button>
                   <button
                     className="cart__order-btn"
@@ -279,6 +336,51 @@ function Cart() {
               {hasOutOfStockItems ? 'Remove unavailable items' : checkingOut ? 'Processing...' : `Pay Rs ${total}`}
             </button>
           </div>
+
+          {selectedItem && (
+            <div className="cart-modal" onClick={() => setSelectedItem(null)} role="presentation">
+              <div className="cart-modal__dialog" onClick={(event) => event.stopPropagation()}>
+                <button type="button" className="cart-modal__close" onClick={() => setSelectedItem(null)}>
+                  Close
+                </button>
+                <div className="cart-modal__gallery">
+                  <article>
+                    <span>Front</span>
+                    {selectedItemPreviews.front ? (
+                      <img
+                        src={selectedItemPreviews.front}
+                        alt={`${selectedItem.productId?.name} front preview`}
+                      />
+                    ) : (
+                      <div className="cart-modal__placeholder">Front preview not available</div>
+                    )}
+                  </article>
+                  <article>
+                    <span>Back</span>
+                    {selectedItemPreviews.back ? (
+                      <img
+                        src={selectedItemPreviews.back}
+                        alt={`${selectedItem.productId?.name} back preview`}
+                      />
+                    ) : (
+                      <div className="cart-modal__placeholder">Back preview not available</div>
+                    )}
+                  </article>
+                </div>
+                <div className="cart-modal__details">
+                  <h3>{selectedItem.productId?.name}</h3>
+                  <p>{selectedItem.productId?.description || 'No product description available.'}</p>
+                  <p><strong>Type:</strong> {TYPE_LABELS[selectedItem.productId?.type] || selectedItem.productId?.type || 'Product'}</p>
+                  <p><strong>Price:</strong> Rs {selectedItem.productId?.price}</p>
+                  <p><strong>Material:</strong> {selectedItem.material}</p>
+                  <p><strong>Quantity:</strong> {selectedItem.quantity || 1}</p>
+                  {selectedItem.productId?.isOutOfStock && (
+                    <p className="cart__stock cart__stock--out">This product is currently out of stock.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

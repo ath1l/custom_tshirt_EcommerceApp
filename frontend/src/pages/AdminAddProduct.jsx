@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/admin.css';
 
-const EMPTY_FORM = {
+const createEmptyForm = (categorySlug = '') => ({
   name: '',
   price: '',
   image: '',
   baseImage: '',
+  backImage: '',
   galleryImages: '',
   description: '',
-  type: 'tshirt',
+  type: categorySlug,
   isOutOfStock: false,
-};
+});
 
 const parseGalleryImages = (value) =>
   value
@@ -28,10 +29,26 @@ const parseGalleryImages = (value) =>
 
 function AdminAddProduct() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(createEmptyForm());
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        const nextCategories = Array.isArray(data) ? data : [];
+        setCategories(nextCategories);
+        const fallbackCategory = nextCategories[0]?.slug || '';
+        setForm((current) => ({
+          ...current,
+          type: nextCategories.some((category) => category.slug === current.type) ? current.type : fallbackCategory,
+        }));
+      })
+      .catch(() => setCategories([]));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -60,7 +77,7 @@ function AdminAddProduct() {
       if (!res.ok) throw new Error(data.message);
 
       setSuccess(`Product "${data.name}" added successfully.`);
-      setForm(EMPTY_FORM);
+      setForm(createEmptyForm(categories[0]?.slug || ''));
     } catch (err) {
       setError(err.message || 'Failed to add product');
     } finally {
@@ -76,23 +93,37 @@ function AdminAddProduct() {
       label: 'Thumbnail Image Path',
       type: 'text',
       placeholder: '/apparel/thumbnails/black-thumb.png',
+      required: true,
     },
     {
       name: 'baseImage',
       label: 'Base Canvas Image Path',
       type: 'text',
       placeholder: '/apparel/editor/black.png',
+      required: true,
     },
-    { name: 'description', label: 'Description', type: 'text', placeholder: 'Short description' },
+    {
+      name: 'backImage',
+      label: 'Back Canvas Image Path',
+      type: 'text',
+      placeholder: '/apparel/editor back/black.png',
+      required: false,
+    },
+    { name: 'description', label: 'Description', type: 'text', placeholder: 'Short description', required: true },
   ];
 
   return (
     <main className="admin-page admin-page--narrow">
       <section className="admin-header">
         <h2>Add New Product</h2>
-        <button onClick={() => navigate('/admin/orders')} className="admin-btn admin-btn--ghost" type="button">
-          Back to Orders
-        </button>
+        <div className="admin-header__actions">
+          <button onClick={() => navigate('/admin/categories')} className="admin-btn admin-btn--ghost" type="button">
+            Manage Categories
+          </button>
+          <button onClick={() => navigate('/admin/orders')} className="admin-btn admin-btn--ghost" type="button">
+            Back to Orders
+          </button>
+        </div>
       </section>
 
       <section className="admin-form-card">
@@ -109,7 +140,7 @@ function AdminAddProduct() {
                 value={form[field.name]}
                 onChange={handleChange}
                 placeholder={field.placeholder}
-                required
+                required={field.required}
               />
             </div>
           ))}
@@ -125,17 +156,20 @@ function AdminAddProduct() {
             />
             <small className="admin-form__hint">
               Use `frontend/public/apparel/thumbnails` for product cards, `frontend/public/apparel/editor` for
-              customization images, and `frontend/public/apparel/gallery` for extra detail images.
+              front customization images, `frontend/public/apparel/editor back` for back customization images, and
+              `frontend/public/apparel/gallery` for extra detail images.
             </small>
           </div>
 
           <div className="admin-form__field">
-            <label>Type</label>
-            <select name="type" value={form.type} onChange={handleChange}>
-              <option value="tshirt">T-Shirt</option>
-              <option value="hoodie">Hoodie</option>
-              <option value="shirt">Shirt</option>
+            <label>Category</label>
+            <select name="type" value={form.type} onChange={handleChange} required disabled={categories.length === 0}>
+              {categories.length === 0 && <option value="">Add a category first</option>}
+              {categories.map((category) => (
+                <option key={category._id} value={category.slug}>{category.name}</option>
+              ))}
             </select>
+            <small className="admin-form__hint">Categories are managed separately so each one can include its own thumbnail.</small>
           </div>
 
           <label className="admin-form__checkbox">
@@ -148,7 +182,7 @@ function AdminAddProduct() {
             <span>Mark this product as out of stock</span>
           </label>
 
-          <button type="submit" disabled={loading} className="admin-btn admin-btn--primary">
+          <button type="submit" disabled={loading || categories.length === 0} className="admin-btn admin-btn--primary">
             {loading ? 'Adding...' : 'Add Product'}
           </button>
         </form>

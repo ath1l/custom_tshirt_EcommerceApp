@@ -18,7 +18,7 @@ module.exports.getCart = async (req, res) => {
 // ADD item to cart
 module.exports.addToCart = async (req, res) => {
   try {
-    const { productId, designJSON, previewImage, material, quantity } = req.body;
+    const { productId, designJSON, previewImage, previewImages, material, quantity } = req.body;
     const product = await Product.findById(productId);
     const normalizedQuantity = Math.max(1, Number(quantity) || 1);
 
@@ -36,7 +36,17 @@ module.exports.addToCart = async (req, res) => {
       cart = new Cart({ userId: req.user._id, items: [] });
     }
 
-    cart.items.push({ productId, designJSON, previewImage, material, quantity: normalizedQuantity });
+    cart.items.push({
+      productId,
+      designJSON,
+      previewImage,
+      previewImages: {
+        front: previewImages?.front || '',
+        back: previewImages?.back || '',
+      },
+      material,
+      quantity: normalizedQuantity,
+    });
     cart.updatedAt = Date.now();
     await cart.save();
 
@@ -66,7 +76,6 @@ module.exports.removeFromCart = async (req, res) => {
 module.exports.updateCartItemQuantity = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const normalizedQuantity = Math.max(1, Number(req.body.quantity) || 1);
     const cart = await Cart.findOne({ userId: req.user._id });
 
     if (!cart) {
@@ -78,7 +87,29 @@ module.exports.updateCartItemQuantity = async (req, res) => {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
-    item.quantity = normalizedQuantity;
+    if (req.body.quantity !== undefined) {
+      item.quantity = Math.max(1, Number(req.body.quantity) || 1);
+    }
+
+    if (req.body.designJSON !== undefined) {
+      item.designJSON = req.body.designJSON;
+    }
+
+    if (req.body.previewImage !== undefined) {
+      item.previewImage = req.body.previewImage;
+    }
+
+    if (req.body.previewImages !== undefined) {
+      item.previewImages = {
+        front: req.body.previewImages?.front || '',
+        back: req.body.previewImages?.back || '',
+      };
+    }
+
+    if (req.body.material !== undefined) {
+      item.material = req.body.material;
+    }
+
     cart.updatedAt = Date.now();
     await cart.save();
 
@@ -114,6 +145,10 @@ module.exports.checkoutCart = async (req, res) => {
           customization: {
             designJSON: item.designJSON,
             previewImage: item.previewImage,
+            previewImages: {
+              front: item.previewImages?.front || '',
+              back: item.previewImages?.back || '',
+            },
             material: item.material,
           },
           quantity: item.quantity,

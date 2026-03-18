@@ -147,11 +147,26 @@
 }
 
 .product-detail__description {
-  margin: 1rem 0 0;
+  margin: 0;
   max-width: 54ch;
   font-size: 1rem;
   line-height: 1.8;
   color: #475569;
+}
+
+.product-detail__description-block {
+  margin-top: 1rem;
+}
+
+.product-detail__description-toggle {
+  margin-top: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #55724e;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .product-detail__quantity {

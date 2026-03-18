@@ -2,18 +2,24 @@ import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/admin.css';
 
-const EMPTY_FORM = {
+const createEmptyForm = (categorySlug = '') => ({
   name: '',
   price: '',
   image: '',
   baseImage: '',
+  backImage: '',
   galleryImages: '',
   description: '',
-  type: 'tshirt',
+  type: categorySlug,
   isOutOfStock: false,
-};
+});
 
-const TYPE_LABELS = { tshirt: 'T-Shirt', hoodie: 'Hoodie', shirt: 'Shirt' };
+const formatCategoryLabel = (value) =>
+  String(value || '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 
 const parseGalleryImages = (value) =>
   value
@@ -28,13 +34,14 @@ const parseGalleryImages = (value) =>
     })
     .filter(Boolean);
 
-function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, submitLabel }) {
+function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, submitLabel, categories }) {
   const fields = [
-    { name: 'name', label: 'Product Name', type: 'text' },
-    { name: 'price', label: 'Price (Rs.)', type: 'number' },
-    { name: 'image', label: 'Thumbnail Image Path', type: 'text' },
-    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text' },
-    { name: 'description', label: 'Description', type: 'text' },
+    { name: 'name', label: 'Product Name', type: 'text', required: true },
+    { name: 'price', label: 'Price (Rs.)', type: 'number', required: true },
+    { name: 'image', label: 'Thumbnail Image Path', type: 'text', required: true },
+    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text', required: true },
+    { name: 'backImage', label: 'Back Canvas Image Path', type: 'text', required: false },
+    { name: 'description', label: 'Description', type: 'text', required: true },
   ];
 
   return (
@@ -42,7 +49,7 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
       {fields.map((field) => (
         <div key={field.name} className="admin-form__field">
           <label>{field.label}</label>
-          <input type={field.type} name={field.name} value={values[field.name]} onChange={onChange} required />
+          <input type={field.type} name={field.name} value={values[field.name]} onChange={onChange} required={field.required} />
         </div>
       ))}
 
@@ -57,17 +64,20 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
         />
         <small className="admin-form__hint">
           Use `frontend/public/apparel/thumbnails` for product cards, `frontend/public/apparel/editor` for
-          customization images, and `frontend/public/apparel/gallery` for extra detail images.
+          front customization images, `frontend/public/apparel/editor back` for back customization images, and
+          `frontend/public/apparel/gallery` for extra detail images.
         </small>
       </div>
 
       <div className="admin-form__field">
-        <label>Type</label>
-        <select name="type" value={values.type} onChange={onChange}>
-          <option value="tshirt">T-Shirt</option>
-          <option value="hoodie">Hoodie</option>
-          <option value="shirt">Shirt</option>
+        <label>Category</label>
+        <select name="type" value={values.type} onChange={onChange} required disabled={categories.length === 0}>
+          {categories.length === 0 && <option value="">Add a category first</option>}
+          {categories.map((category) => (
+            <option key={category._id} value={category.slug}>{category.name}</option>
+          ))}
         </select>
+        <small className="admin-form__hint">Categories are managed separately so each one can include its own thumbnail.</small>
       </div>
 
       <label className="admin-form__checkbox">
@@ -83,7 +93,7 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
       {error && <p className="admin-message admin-message--error">{error}</p>}
 
       <div className="admin-header__actions">
-        <button type="submit" disabled={loading} className="admin-btn admin-btn--primary">
+        <button type="submit" disabled={loading || categories.length === 0} className="admin-btn admin-btn--primary">
           {loading ? 'Saving...' : submitLabel}
         </button>
         <button type="button" onClick={onCancel} className="admin-btn admin-btn--ghost">
@@ -97,13 +107,14 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
 function AdminProducts() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(createEmptyForm());
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState(EMPTY_FORM);
+  const [addForm, setAddForm] = useState(createEmptyForm());
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
 
@@ -120,6 +131,22 @@ function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
+    fetch('http://localhost:3000/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        const nextCategories = Array.isArray(data) ? data : [];
+        setCategories(nextCategories);
+        const fallbackCategory = nextCategories[0]?.slug || '';
+        setAddForm((current) => ({
+          ...current,
+          type: nextCategories.some((category) => category.slug === current.type) ? current.type : fallbackCategory,
+        }));
+        setForm((current) => ({
+          ...current,
+          type: nextCategories.some((category) => category.slug === current.type) ? current.type : fallbackCategory,
+        }));
+      })
+      .catch(() => setCategories([]));
   }, []);
 
   const startEdit = (product) => {
@@ -129,9 +156,10 @@ function AdminProducts() {
       price: product.price || '',
       image: product.image || '',
       baseImage: product.baseImage || '',
+      backImage: product.backImage || '',
       galleryImages: (product.galleryImages || []).join('\n'),
       description: product.description || '',
-      type: product.type || 'tshirt',
+      type: product.type || categories[0]?.slug || '',
       isOutOfStock: Boolean(product.isOutOfStock),
     });
     setFormError('');
@@ -139,7 +167,7 @@ function AdminProducts() {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm(createEmptyForm(categories[0]?.slug || ''));
     setFormError('');
   };
 
@@ -158,11 +186,12 @@ function AdminProducts() {
           galleryImages: parseGalleryImages(form.galleryImages),
         }),
       });
-      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Failed to update');
       cancelEdit();
       fetchProducts();
     } catch (err) {
-      setFormError(err.message);
+      setFormError(err.message || 'Failed to update');
     } finally {
       setFormLoading(false);
     }
@@ -192,8 +221,9 @@ function AdminProducts() {
           price: Number(product.price) || 0,
           image: product.image || '',
           baseImage: product.baseImage || '',
+          backImage: product.backImage || '',
           description: product.description || '',
-          type: product.type || 'tshirt',
+          type: product.type || categories[0]?.slug || '',
           galleryImages: product.galleryImages || [],
           isOutOfStock: !product.isOutOfStock,
         }),
@@ -228,12 +258,13 @@ function AdminProducts() {
           galleryImages: parseGalleryImages(addForm.galleryImages),
         }),
       });
-      if (!res.ok) throw new Error('Failed to add product');
-      setAddForm(EMPTY_FORM);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Failed to add product');
+      setAddForm(createEmptyForm(categories[0]?.slug || ''));
       setShowAddForm(false);
       fetchProducts();
     } catch (err) {
-      setAddError(err.message);
+      setAddError(err.message || 'Failed to add product');
     } finally {
       setAddLoading(false);
     }
@@ -250,11 +281,14 @@ function AdminProducts() {
           <button onClick={() => navigate('/admin/orders')} className="admin-btn admin-btn--ghost" type="button">
             Orders
           </button>
+          <button onClick={() => navigate('/admin/categories')} className="admin-btn admin-btn--ghost" type="button">
+            Categories
+          </button>
           <button
             onClick={() => {
               setShowAddForm(!showAddForm);
               setAddError('');
-              setAddForm(EMPTY_FORM);
+              setAddForm(createEmptyForm(categories[0]?.slug || ''));
             }}
             className="admin-btn admin-btn--primary"
             type="button"
@@ -270,18 +304,12 @@ function AdminProducts() {
             <p>Total Products</p>
             <strong>{products.length}</strong>
           </article>
-          <article className="admin-stat-card admin-stat-card--neutral">
-            <p>T-Shirts</p>
-            <strong>{products.filter((product) => product.type === 'tshirt').length}</strong>
-          </article>
-          <article className="admin-stat-card admin-stat-card--neutral">
-            <p>Hoodies</p>
-            <strong>{products.filter((product) => product.type === 'hoodie').length}</strong>
-          </article>
-          <article className="admin-stat-card admin-stat-card--neutral">
-            <p>Shirts</p>
-            <strong>{products.filter((product) => product.type === 'shirt').length}</strong>
-          </article>
+          {categories.slice(0, 3).map((category) => (
+            <article key={category._id} className="admin-stat-card admin-stat-card--neutral">
+              <p>{category.name}</p>
+              <strong>{products.filter((product) => product.type === category.slug).length}</strong>
+            </article>
+          ))}
         </section>
       )}
 
@@ -298,11 +326,12 @@ function AdminProducts() {
             onSubmit={handleAddSubmit}
             onCancel={() => {
               setShowAddForm(false);
-              setAddForm(EMPTY_FORM);
+              setAddForm(createEmptyForm(categories[0]?.slug || ''));
             }}
             error={addError}
             loading={addLoading}
             submitLabel="Add Product"
+            categories={categories}
           />
         </section>
       )}
@@ -331,9 +360,10 @@ function AdminProducts() {
                     <td>
                       <strong>{product.name}</strong>
                       <p className="admin-table__sub">{product.description}</p>
+                      {product.backImage && <p className="admin-table__sub">Back design enabled</p>}
                       {product.isOutOfStock && <p className="admin-table__stock admin-table__stock--out">Out of stock</p>}
                     </td>
-                    <td>{TYPE_LABELS[product.type] || product.type}</td>
+                    <td>{formatCategoryLabel(product.type)}</td>
                     <td>Rs. {product.price}</td>
                     <td>
                       <div className="admin-header__actions">
@@ -377,6 +407,7 @@ function AdminProducts() {
                           error={formError}
                           loading={formLoading}
                           submitLabel="Save Changes"
+                          categories={categories}
                         />
                       </td>
                     </tr>

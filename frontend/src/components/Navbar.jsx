@@ -1,41 +1,35 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/navbar.css";
 
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSigninOpen, setIsSigninOpen] = useState(false);
-  const signinRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    let isCancelled = false;
 
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (signinRef.current && !signinRef.current.contains(event.target)) {
-        setIsSigninOpen(false);
-      }
-    };
+    fetch("http://localhost:3000/check-auth", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) {
+          return;
+        }
 
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/check-auth", {
-        credentials: "include",
+        setIsAuthenticated(Boolean(data.isAuthenticated));
+        setIsAdmin(data.user?.role === "admin");
+      })
+      .catch((err) => {
+        console.error(err);
       });
-      const data = await res.json();
-      setIsAuthenticated(Boolean(data.isAuthenticated));
-      setIsAdmin(data.user?.role === "admin");
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const handleLogout = async () => {
     await fetch("http://localhost:3000/logout", {
@@ -76,22 +70,10 @@ function Navbar() {
               Logout
             </button>
           ) : (
-            <div
-              className={`signin-dropdown ${isSigninOpen ? "is-open" : ""}`}
-              ref={signinRef}
-            >
-              <button
-                type="button"
-                className="signin-text"
-                onClick={() => setIsSigninOpen((prev) => !prev)}
-              >
-                Sign In
-              </button>
-              <div className="dropdown-menu">
-                <Link to="/login" onClick={() => setIsSigninOpen(false)}>Login</Link>
-                <Link to="/register" onClick={() => setIsSigninOpen(false)}>Register</Link>
-              </div>
-            </div>
+            <>
+              <Link to="/login" className="auth-btn auth-btn--ghost">Login</Link>
+              <Link to="/register" className="auth-btn auth-btn--primary">Register</Link>
+            </>
           )}
         </div>
       </div>
