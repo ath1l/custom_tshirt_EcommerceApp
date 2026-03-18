@@ -11,12 +11,13 @@ const session = require('express-session');
 
 const User = require('./models/User');
 const app = express();
-
+const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const sessionSecret = process.env.SESSION_SECRET || 'thisisnotagoodsecret';
 
 const cors = require('cors');
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: frontendOrigin,
   credentials: true
 }));
 
@@ -33,7 +34,7 @@ const paymentRoutes = require('./routes/payment');
 // =======================
 // MongoDB
 // =======================
-mongoose.connect('mongodb://localhost:27017/tshirt-store')
+mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log('MongoDB connected'))
   .catch(console.log);
 
@@ -51,7 +52,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Session + Passport
 // =======================
 app.use(session({
-  secret: 'thisisnotagoodsecret',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false
 }));

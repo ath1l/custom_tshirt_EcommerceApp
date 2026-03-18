@@ -1,0 +1,92 @@
+[
+  {
+    "localPath": "editor/blue t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849510/custome/editor/blue%20t%20shirt.png",
+    "publicId": "custome/editor/blue t shirt"
+  },
+  {
+    "localPath": "editor/green t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849513/custome/editor/green%20t%20shirt.png",
+    "publicId": "custome/editor/green t shirt"
+  },
+  {
+    "localPath": "editor/grey t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849515/custome/editor/grey%20t%20shirt.png",
+    "publicId": "custome/editor/grey t shirt"
+  },
+  {
+    "localPath": "editor/red t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849517/custome/editor/red%20t%20shirt.png",
+    "publicId": "custome/editor/red t shirt"
+  },
+  {
+    "localPath": "editor/white t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849520/custome/editor/white%20t%20shirt.png",
+    "publicId": "custome/editor/white t shirt"
+  },
+  {
+    "localPath": "editor back/blue t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849522/custome/editor%20back/blue%20t%20shirt.png",
+    "publicId": "custome/editor back/blue t shirt"
+  },
+  {
+    "localPath": "editor back/green t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849524/custome/editor%20back/green%20t%20shirt.png",
+    "publicId": "custome/editor back/green t shirt"
+  },
+  {
+    "localPath": "editor back/grey t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849526/custome/editor%20back/grey%20t%20shirt.png",
+    "publicId": "custome/editor back/grey t shirt"
+  },
+  {
+    "localPath": "editor back/red t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849528/custome/editor%20back/red%20t%20shirt.png",
+    "publicId": "custome/editor back/red t shirt"
+  },
+  {
+    "localPath": "editor back/white t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849530/custome/editor%20back/white%20t%20shirt.png",
+    "publicId": "custome/editor back/white t shirt"
+  },
+  {
+    "localPath": "gallery/grey t shirt.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849533/custome/gallery/grey%20t%20shirt.png",
+    "publicId": "custome/gallery/grey t shirt"
+  },
+  {
+    "localPath": "gallery/red t shirt 1.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849535/custome/gallery/red%20t%20shirt%201.png",
+    "publicId": "custome/gallery/red t shirt 1"
+  },
+  {
+    "localPath": "gallery/red t shirt 2.png",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849536/custome/gallery/red%20t%20shirt%202.png",
+    "publicId": "custome/gallery/red t shirt 2"
+  },
+  {
+    "localPath": "thumbnails/blue t shirt thumb.jpg",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849537/custome/thumbnails/blue%20t%20shirt%20thumb.jpg",
+    "publicId": "custome/thumbnails/blue t shirt thumb"
+  },
+  {
+    "localPath": "thumbnails/green t shirt thumb.jpg",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849539/custome/thumbnails/green%20t%20shirt%20thumb.jpg",
+    "publicId": "custome/thumbnails/green t shirt thumb"
+  },
+  {
+    "localPath": "thumbnails/grey t shirt thumb.jpg",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849540/custome/thumbnails/grey%20t%20shirt%20thumb.jpg",
+    "publicId": "custome/thumbnails/grey t shirt thumb"
+  },
+  {
+    "localPath": "thumbnails/red t shirt thumb.jpg",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849542/custome/thumbnails/red%20t%20shirt%20thumb.jpg",
+    "publicId": "custome/thumbnails/red t shirt thumb"
+  },
+  {
+    "localPath": "thumbnails/white t shirt thumb.jpg",
+    "cloudinaryUrl": "https://res.cloudinary.com/dxyte5jrn/image/upload/v1773849543/custome/thumbnails/white%20t%20shirt%20thumb.jpg",
+    "publicId": "custome/thumbnails/white t shirt thumb"
+  }
+]

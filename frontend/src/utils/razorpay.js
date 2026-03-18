@@ -1,3 +1,5 @@
+import { apiUrl } from './api';
+
 /**
  * Dynamically loads the Razorpay checkout SDK from their CDN.
  * Safe to call multiple times — returns immediately if already loaded.
@@ -30,7 +32,7 @@ export async function openRazorpayCheckout(amount, description = 'Custom Apparel
   if (!loaded) throw new Error('Failed to load Razorpay SDK');
 
   // 1. Create order on backend
-  const res = await fetch('http://localhost:3000/payment/create-order', {
+  const res = await fetch(apiUrl('/payment/create-order'), {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

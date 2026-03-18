@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CloudinaryUploadField from '../components/CloudinaryUploadField';
 import '../styles/admin.css';
+import { apiUrl } from '../utils/api';
 
 const createEmptyForm = (categorySlug = '') => ({
   name: '',
@@ -36,7 +38,7 @@ function AdminAddProduct() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/categories')
+    fetch(apiUrl('/categories'))
       .then((res) => res.json())
       .then((data) => {
         const nextCategories = Array.isArray(data) ? data : [];
@@ -62,7 +64,7 @@ function AdminAddProduct() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:3000/admin/products', {
+      const res = await fetch(apiUrl('/admin/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -145,6 +147,21 @@ function AdminAddProduct() {
             </div>
           ))}
 
+          <CloudinaryUploadField
+            label="Upload Thumbnail to Cloudinary"
+            onUploaded={(url) => setForm((current) => ({ ...current, image: url }))}
+          />
+
+          <CloudinaryUploadField
+            label="Upload Front Base Image"
+            onUploaded={(url) => setForm((current) => ({ ...current, baseImage: url }))}
+          />
+
+          <CloudinaryUploadField
+            label="Upload Back Base Image"
+            onUploaded={(url) => setForm((current) => ({ ...current, backImage: url }))}
+          />
+
           <div className="admin-form__field">
             <label>Extra Gallery Images</label>
             <textarea
@@ -160,6 +177,17 @@ function AdminAddProduct() {
               `frontend/public/apparel/gallery` for extra detail images.
             </small>
           </div>
+
+          <CloudinaryUploadField
+            label="Upload Gallery Images"
+            multiple
+            onUploaded={(urls) =>
+              setForm((current) => ({
+                ...current,
+                galleryImages: [...current.galleryImages.split('\n').filter(Boolean), ...urls].join('\n'),
+              }))
+            }
+          />
 
           <div className="admin-form__field">
             <label>Category</label>

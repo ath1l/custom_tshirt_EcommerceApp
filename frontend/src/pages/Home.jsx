@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/home.css';
+import { apiUrl } from '../utils/api';
 
 function Home() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/categories')
+    fetch(apiUrl('/categories'))
       .then((res) => res.json())
       .then((data) => {
         setCategories(Array.isArray(data) ? data : []);

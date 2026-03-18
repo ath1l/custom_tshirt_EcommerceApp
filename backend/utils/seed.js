@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 
@@ -23,8 +24,7 @@ const products = [
     }
 ];
 
-// Local MongoDB connection
-mongoose.connect('mongodb://localhost:27017/tshirt-store')
+mongoose.connect(process.env.MONGO_URL)
     .then(() => {
         console.log('Mongo Connection Open');
     })

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/product-detail.css';
 import { openRazorpayCheckout } from '../utils/razorpay';
+import { apiUrl } from '../utils/api';
 
 const DETAIL_DESCRIPTION_LIMIT = 180;
 const SIMILAR_DESCRIPTION_LIMIT = 78;
@@ -58,7 +59,7 @@ function ProductDetail() {
         setProduct(null);
         setSimilar([]);
 
-        const productRes = await fetch(`http://localhost:3000/products/${productId}`);
+        const productRes = await fetch(apiUrl(`/products/${productId}`));
         if (!productRes.ok) {
           throw new Error('Failed to load product');
         }
@@ -73,7 +74,7 @@ function ProductDetail() {
         setQuantity(1);
         setShowFullDescription(false);
 
-        const similarRes = await fetch(`http://localhost:3000/products?type=${productData.type}`);
+        const similarRes = await fetch(apiUrl(`/products?type=${productData.type}`));
         if (!similarRes.ok) {
           throw new Error('Failed to load related products');
         }
@@ -146,7 +147,7 @@ function ProductDetail() {
   const handleAddToCart = async () => {
     try {
       setSubmittingAction('cart');
-      const response = await fetch('http://localhost:3000/cart', {
+      const response = await fetch(apiUrl('/cart'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +178,7 @@ function ProductDetail() {
 
     const paymentResponse = await openRazorpayCheckout(product.price * quantity, `${product.name} x${quantity}`);
 
-    const verifyRes = await fetch('http://localhost:3000/payment/verify', {
+    const verifyRes = await fetch(apiUrl('/payment/verify'), {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

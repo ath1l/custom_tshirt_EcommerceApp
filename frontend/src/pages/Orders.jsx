@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { buildCustomizationPreview } from "../utils/customizationPreview";
 import "../styles/orders.css";
+import { apiUrl } from "../utils/api";
 
 const TYPE_LABELS = {
   tshirt: "T-Shirt",
@@ -15,7 +16,7 @@ function Orders() {
   const [selectedOrderPreviews, setSelectedOrderPreviews] = useState({ front: '', back: '' });
 
   useEffect(() => {
-    fetch("http://localhost:3000/orders", {
+    fetch(apiUrl("/orders"), {
       credentials: "include",
     })
       .then((res) => res.json())

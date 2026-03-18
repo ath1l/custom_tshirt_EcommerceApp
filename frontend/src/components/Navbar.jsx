@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../styles/navbar.css";
+import { apiUrl } from "../utils/api";
 
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,7 +11,7 @@ function Navbar() {
   useEffect(() => {
     let isCancelled = false;
 
-    fetch("http://localhost:3000/check-auth", {
+    fetch(apiUrl("/check-auth"), {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -32,7 +33,7 @@ function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("http://localhost:3000/logout", {
+    await fetch(apiUrl("/logout"), {
       method: "POST",
       credentials: "include",
     });

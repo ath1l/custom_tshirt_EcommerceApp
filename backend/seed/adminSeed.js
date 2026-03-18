@@ -1,7 +1,8 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
-mongoose.connect('mongodb://localhost:27017/tshirt-store')
+mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log('MongoDB connected'))
   .catch(console.log);
 

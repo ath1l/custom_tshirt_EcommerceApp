@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/profile.css";
+import { apiUrl } from "../utils/api";
 
 function Profile() {
   const [data, setData] = useState({
@@ -17,9 +18,9 @@ function Profile() {
     (async () => {
       try {
         const [authRes, cartRes, ordersRes] = await Promise.all([
-          fetch("http://localhost:3000/check-auth", { credentials: "include" }),
-          fetch("http://localhost:3000/cart", { credentials: "include" }),
-          fetch("http://localhost:3000/orders", { credentials: "include" }),
+          fetch(apiUrl("/check-auth"), { credentials: "include" }),
+          fetch(apiUrl("/cart"), { credentials: "include" }),
+          fetch(apiUrl("/orders"), { credentials: "include" }),
         ]);
 
         const auth = await authRes.json();

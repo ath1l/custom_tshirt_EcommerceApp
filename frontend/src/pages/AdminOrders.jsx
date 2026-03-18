@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/admin.css';
+import { apiUrl } from '../utils/api';
 
 function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -12,8 +13,8 @@ function AdminOrders() {
 
   useEffect(() => {
     Promise.all([
-      fetch('http://localhost:3000/admin/orders', { credentials: 'include' }),
-      fetch('http://localhost:3000/products'),
+      fetch(apiUrl('/admin/orders'), { credentials: 'include' }),
+      fetch(apiUrl('/products')),
     ])
       .then(async ([ordersRes, productsRes]) => {
         if (ordersRes.status === 403) throw new Error('Access denied');
@@ -49,7 +50,7 @@ function AdminOrders() {
   const handleStatusChange = async (orderId, nextStatus) => {
     try {
       setUpdatingOrderId(orderId);
-      const res = await fetch(`http://localhost:3000/admin/orders/${orderId}/status`, {
+      const res = await fetch(apiUrl(`/admin/orders/${orderId}/status`), {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

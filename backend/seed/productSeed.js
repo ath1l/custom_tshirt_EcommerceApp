@@ -1,8 +1,9 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
 mongoose
-  .connect("mongodb://localhost:27017/tshirt-store")
+  .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB connected for seeding"))
   .catch((err) => {
     console.error("MongoDB connection failed:", err);

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CloudinaryUploadField from '../components/CloudinaryUploadField';
 import '../styles/admin.css';
+import { apiUrl } from '../utils/api';
 
 const EMPTY_FORM = {
   name: '',
@@ -26,7 +28,7 @@ function AdminCategories() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3000/admin/categories', {
+      const res = await fetch(apiUrl('/admin/categories'), {
         credentials: 'include',
       });
       const data = await res.json();
@@ -60,7 +62,7 @@ function AdminCategories() {
       };
 
       const res = await fetch(
-        editingId ? `http://localhost:3000/admin/categories/${editingId}` : 'http://localhost:3000/admin/categories',
+        editingId ? apiUrl(`/admin/categories/${editingId}`) : apiUrl('/admin/categories'),
         {
           method: editingId ? 'PUT' : 'POST',
           credentials: 'include',
@@ -99,7 +101,7 @@ function AdminCategories() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/admin/categories/${category._id}`, {
+      const res = await fetch(apiUrl(`/admin/categories/${category._id}`), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -169,6 +171,11 @@ function AdminCategories() {
               required
             />
           </div>
+
+          <CloudinaryUploadField
+            label="Upload Thumbnail to Cloudinary"
+            onUploaded={(url) => setForm((current) => ({ ...current, image: url }))}
+          />
 
           {error && <p className="admin-message admin-message--error">{error}</p>}
 

@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { openRazorpayCheckout } from "../utils/razorpay";
 import { buildCustomizationPreview, deriveBackImage } from "../utils/customizationPreview";
 import "../styles/customize.css";
+import { apiUrl } from "../utils/api";
 
 const renderIcon = (ctx, left, top, styleOverride, fabricObject) => {
   const size = 24;
@@ -212,7 +213,7 @@ function Customize() {
 
     const init = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/products/${productId}`);
+        const res = await fetch(apiUrl(`/products/${productId}`));
         const product = await res.json();
         productRef.current = product;
         sideDesignsRef.current = getInitialSideDesigns(existingCartItem?.designJSON);
@@ -369,7 +370,7 @@ function Customize() {
     try {
       const paymentResponse = await openRazorpayCheckout(product.price, product.name);
 
-      const verifyRes = await fetch("http://localhost:3000/payment/verify", {
+      const verifyRes = await fetch(apiUrl("/payment/verify"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -403,7 +404,7 @@ function Customize() {
 
     try {
       const res = await fetch(
-        cartItemId ? `http://localhost:3000/cart/item/${cartItemId}` : "http://localhost:3000/cart",
+        cartItemId ? apiUrl(`/cart/item/${cartItemId}`) : apiUrl("/cart"),
         {
         method: cartItemId ? "PATCH" : "POST",
         credentials: "include",

@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CloudinaryUploadField from '../components/CloudinaryUploadField';
 import '../styles/admin.css';
+import { apiUrl } from '../utils/api';
 
 const createEmptyForm = (categorySlug = '') => ({
   name: '',
@@ -53,6 +55,21 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
         </div>
       ))}
 
+      <CloudinaryUploadField
+        label="Upload Thumbnail to Cloudinary"
+        onUploaded={(url) => onChange({ target: { name: 'image', value: url, type: 'text' } })}
+      />
+
+      <CloudinaryUploadField
+        label="Upload Front Base Image"
+        onUploaded={(url) => onChange({ target: { name: 'baseImage', value: url, type: 'text' } })}
+      />
+
+      <CloudinaryUploadField
+        label="Upload Back Base Image"
+        onUploaded={(url) => onChange({ target: { name: 'backImage', value: url, type: 'text' } })}
+      />
+
       <div className="admin-form__field">
         <label>Extra Gallery Images</label>
         <textarea
@@ -68,6 +85,20 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
           `frontend/public/apparel/gallery` for extra detail images.
         </small>
       </div>
+
+      <CloudinaryUploadField
+        label="Upload Gallery Images"
+        multiple
+        onUploaded={(urls) =>
+          onChange({
+            target: {
+              name: 'galleryImages',
+              value: [...values.galleryImages.split('\n').filter(Boolean), ...urls].join('\n'),
+              type: 'text',
+            },
+          })
+        }
+      />
 
       <div className="admin-form__field">
         <label>Category</label>
@@ -120,7 +151,7 @@ function AdminProducts() {
 
   const fetchProducts = () => {
     setLoading(true);
-    fetch('http://localhost:3000/products')
+    fetch(apiUrl('/products'))
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
@@ -131,7 +162,7 @@ function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
-    fetch('http://localhost:3000/categories')
+    fetch(apiUrl('/categories'))
       .then((res) => res.json())
       .then((data) => {
         const nextCategories = Array.isArray(data) ? data : [];
@@ -176,7 +207,7 @@ function AdminProducts() {
     setFormLoading(true);
     setFormError('');
     try {
-      const res = await fetch(`http://localhost:3000/admin/products/${editingId}`, {
+      const res = await fetch(apiUrl(`/admin/products/${editingId}`), {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -200,7 +231,7 @@ function AdminProducts() {
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
-      await fetch(`http://localhost:3000/admin/products/${id}`, {
+      await fetch(apiUrl(`/admin/products/${id}`), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -212,7 +243,7 @@ function AdminProducts() {
 
   const handleStockToggle = async (product) => {
     try {
-      const res = await fetch(`http://localhost:3000/admin/products/${product._id}`, {
+      const res = await fetch(apiUrl(`/admin/products/${product._id}`), {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -248,7 +279,7 @@ function AdminProducts() {
     setAddLoading(true);
     setAddError('');
     try {
-      const res = await fetch('http://localhost:3000/admin/products', {
+      const res = await fetch(apiUrl('/admin/products'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

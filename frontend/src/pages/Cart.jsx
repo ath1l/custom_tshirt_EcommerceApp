@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { openRazorpayCheckout } from '../utils/razorpay';
 import { buildCustomizationPreview } from '../utils/customizationPreview';
 import '../styles/cart.css';
+import { apiUrl } from '../utils/api';
 
 const TYPE_LABELS = {
   tshirt: 'T-Shirt',
@@ -24,7 +25,7 @@ function Cart() {
 
   const fetchCart = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:3000/cart', { credentials: 'include' });
+      const res = await fetch(apiUrl('/cart'), { credentials: 'include' });
 
       if (res.status === 401) {
         // not logged in, send straight to login page
@@ -73,7 +74,7 @@ function Cart() {
 
   const handleRemove = async (itemId) => {
     try {
-      const res = await fetch(`http://localhost:3000/cart/item/${itemId}`, {
+      const res = await fetch(apiUrl(`/cart/item/${itemId}`), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -89,7 +90,7 @@ function Cart() {
 
   const handleQuantityChange = async (itemId, nextQuantity) => {
     try {
-      const res = await fetch(`http://localhost:3000/cart/item/${itemId}`, {
+      const res = await fetch(apiUrl(`/cart/item/${itemId}`), {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -133,7 +134,7 @@ function Cart() {
       );
 
       // Verify on backend & create orders
-      const verifyRes = await fetch('http://localhost:3000/payment/verify', {
+      const verifyRes = await fetch(apiUrl('/payment/verify'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -173,7 +174,7 @@ function Cart() {
         `${item.productId.name} x${item.quantity || 1}`
       );
 
-      const verifyRes = await fetch('http://localhost:3000/payment/verify', {
+      const verifyRes = await fetch(apiUrl('/payment/verify'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -199,7 +200,7 @@ function Cart() {
       if (!verifyRes.ok) throw new Error('Payment verification failed');
 
       // Remove the ordered item from cart
-      await fetch(`http://localhost:3000/cart/item/${item._id}`, {
+      await fetch(apiUrl(`/cart/item/${item._id}`), {
         method: 'DELETE',
         credentials: 'include',
       });

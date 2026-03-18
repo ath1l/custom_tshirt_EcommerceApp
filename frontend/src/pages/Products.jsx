@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import '../styles/products.css';
+import { apiUrl } from '../utils/api';
 
 const DEFAULT_CATEGORY_IMAGES = {
   all: '/category thumb/all product.png',
@@ -26,7 +27,7 @@ function Products() {
   const selectedType = searchParams.get('type') || 'all';
 
   useEffect(() => {
-    fetch('http://localhost:3000/categories')
+    fetch(apiUrl('/categories'))
       .then((res) => res.json())
       .then((data) => {
         setCategoryList(Array.isArray(data) ? data : []);
@@ -40,8 +41,8 @@ function Products() {
         setLoading(true);
         setError('');
         const url = selectedType === 'all'
-          ? 'http://localhost:3000/products'
-          : `http://localhost:3000/products?type=${selectedType}`;
+          ? apiUrl('/products')
+          : apiUrl(`/products?type=${selectedType}`);
 
         const response = await fetch(url);
         if (!response.ok) {

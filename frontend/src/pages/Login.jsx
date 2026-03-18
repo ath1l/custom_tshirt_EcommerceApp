@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/background.css";
 import "../styles/login.css";
+import { apiUrl } from '../utils/api';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -16,7 +17,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/login', {
+      const response = await fetch(apiUrl('/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
