@@ -8,6 +8,10 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
+    googleId: {
+        type: String,
+        default: null   // null for local users, filled for Google users
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],
@@ -15,7 +19,9 @@ const userSchema = new Schema({
     }
 });
 
-// Adds username, hash, salt, register(), authenticate(), etc
-userSchema.plugin(passportLocalMongoose);
+// passportLocalMongoose adds: username, hash, salt, register(), authenticate(), etc.
+// { usernameUnique: false } because Google users might share display names —
+// email is already our real unique key.
+userSchema.plugin(passportLocalMongoose, { usernameUnique: false });
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);
