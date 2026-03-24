@@ -1,0 +1,230 @@
+.customize-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
+  color: #1e293b;
+}
+
+.customize-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 360px);
+  gap: 1.25rem;
+}
+
+.customize-canvas-panel,
+.customize-card {
+  border: 1px solid #dbe4dd;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf7 100%);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+}
+
+.customize-canvas-panel {
+  padding: 1.5rem;
+}
+
+.customize-eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.customize-canvas-panel h2 {
+  margin: 0.55rem 0 0;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.customize-copy {
+  margin: 0.7rem 0 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.customize-side-picker {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.customize-side-card {
+  width: 120px;
+  border: 1px solid #dbe4dd;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  font: inherit;
+  font-weight: 700;
+  color: #4b5563;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.customize-side-card img {
+  width: 100%;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f5f9f3 0%, #ffffff 100%);
+}
+
+.customize-side-card.is-active {
+  border-color: #889e81;
+  box-shadow: 0 14px 28px rgba(136, 158, 129, 0.2);
+  transform: translateY(-1px);
+}
+
+.customize-canvas-shell {
+  margin-top: 1.25rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #eff5ed 0%, #ffffff 100%);
+  border: 1px solid #e6ede4;
+  padding: 1rem;
+  display: grid;
+  place-items: center;
+}
+
+.customize-canvas {
+  display: block;
+  max-width: 100%;
+}
+
+.customize-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.customize-card {
+  padding: 1rem;
+}
+
+.customize-card h3 {
+  margin: 0 0 0.8rem;
+}
+
+.customize-label {
+  display: block;
+  margin: 0.7rem 0 0.35rem;
+  color: #4b5563;
+}
+
+.customize-input,
+.customize-file {
+  width: 100%;
+  border: 1px solid #d6dfd3;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  background: #ffffff;
+}
+
+.customize-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.customize-upload-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #d6dfd3;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+}
+
+.customize-upload-btn {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #1f2937;
+  color: #ffffff;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.customize-upload-name {
+  min-width: 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customize-range {
+  width: 100%;
+}
+
+.customize-color {
+  width: 100%;
+  height: 44px;
+  padding: 0.2rem;
+  border: 1px solid #d6dfd3;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.customize-secondary-btn,
+.customize-dark-btn,
+.customize-primary-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.customize-secondary-btn {
+  margin-top: 0.9rem;
+  background: #f2f6f1;
+  color: #324032;
+}
+
+.customize-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6b7280;
+}
+
+.customize-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customize-dark-btn {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.customize-primary-btn {
+  background: #a8c3a0;
+  color: #ffffff;
+}
+
+@media (max-width: 960px) {
+  .customize-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .customize-page {
+    padding-inline: 1rem;
+  }
+}

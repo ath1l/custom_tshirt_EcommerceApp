@@ -23,6 +23,7 @@ app.use(cors({
 // routes
 const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
+const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const cartRoutes = require('./routes/cart');
@@ -73,6 +74,7 @@ app.get('/', (req, res) => {
 
 app.use('/', userRoutes);
 app.use('/products', productRoutes);
+app.use('/categories', categoryRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin', adminRoutes);
 app.use('/cart', cartRoutes);

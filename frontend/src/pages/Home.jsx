@@ -1,29 +1,19 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/home.css';
 
 function Home() {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
 
-  const categories = [
-    {
-      label: 'T-Shirts',
-      value: 'tshirt',
-      desc: 'Daily essentials with premium cotton comfort.',
-      image: '/category thumb/t shirt.webp',
-    },
-    {
-      label: 'Hoodies',
-      value: 'hoodie',
-      desc: 'Warm layers for streetwear and casual fits.',
-      image: '/category thumb/hoodies.webp',
-    },
-    {
-      label: 'Shirts',
-      value: 'shirt',
-      desc: 'Smart casual styles with clean finishing.',
-      image: '/category thumb/shirt.jpg',
-    },
-  ];
+  useEffect(() => {
+    fetch('http://localhost:3000/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setCategories([]));
+  }, []);
 
   return (
     <main className="home">
@@ -65,16 +55,16 @@ function Home() {
 
         <div className="home__category-grid">
           {categories.map((cat) => (
-            <article key={cat.value} className="home__category-card">
+            <article key={cat.slug} className="home__category-card">
               <img
                 src={cat.image}
-                alt={cat.label}
+                alt={cat.name}
                 className="home__category-image"
                 loading="lazy"
               />
-              <h3>{cat.label}</h3>
-              <p>{cat.desc}</p>
-              <button onClick={() => navigate(`/products?type=${cat.value}`)}>View {cat.label}</button>
+              <h3>{cat.name}</h3>
+              <p>Explore customizable {cat.name.toLowerCase()} designs with front and back editing support.</p>
+              <button onClick={() => navigate(`/products?type=${cat.slug}`)}>View {cat.name}</button>
             </article>
           ))}
         </div>

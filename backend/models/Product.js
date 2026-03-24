@@ -10,12 +10,26 @@ const productSchema = new mongoose.Schema({
     // Base image used in Fabric canvas
     baseImage: String,
 
+    // Optional back image used in Fabric canvas
+    backImage: String,
+
+    // Optional gallery images for the product detail page
+    galleryImages: {
+        type: [String],
+        default: [],
+    },
+
+    isOutOfStock: {
+        type: Boolean,
+        default: false,
+    },
+
     description: String,
 
-     type: {
+    type: {
         type: String,
-        enum: ['tshirt', 'hoodie', 'shirt'],
         default: 'tshirt',
+        trim: true,
     },
 });
 

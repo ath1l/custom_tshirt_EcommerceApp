@@ -1,0 +1,33 @@
+.info-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  color: #1e293b;
+}
+
+.info-page__content {
+  display: grid;
+  gap: 2rem;
+}
+
+.info-page__section {
+  scroll-margin-top: 110px;
+}
+
+.info-page__section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.info-page__section p {
+  margin: 0.75rem 0 0;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+@media (max-width: 800px) {
+  .info-page {
+    padding-inline: 1rem;
+  }
+}

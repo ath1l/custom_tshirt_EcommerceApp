@@ -6,8 +6,12 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
-  designJSON: { type: Object, required: true },
+  designJSON: { type: Object, default:null },
   previewImage: { type: String, required: true },
+  previewImages: {
+    front: { type: String, default: '' },
+    back: { type: String, default: '' },
+  },
   material: {
     type: String,
     enum: ['Cotton', 'Cotton-Poly Blend', 'Polyester'],

@@ -7,7 +7,7 @@ module.exports.index = async (req, res) => {
     if (req.query.type) {
       filter.type = req.query.type;
     }
-    const products = await Product.find(filter);
+    const products = await Product.find(filter).sort({ _id: -1 });
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

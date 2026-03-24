@@ -1,68 +1,173 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../styles/admin.css';
 
-const EMPTY_FORM = {
+const createEmptyForm = (categorySlug = '') => ({
   name: '',
   price: '',
   image: '',
   baseImage: '',
+  backImage: '',
+  galleryImages: '',
   description: '',
-  type: 'tshirt',
-};
+  type: categorySlug,
+  isOutOfStock: false,
+});
 
-const TYPE_LABELS = { tshirt: 'T-Shirt', hoodie: 'Hoodie', shirt: 'Shirt' };
+const formatCategoryLabel = (value) =>
+  String(value || '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 
-const inputStyle = {
-  width: '100%',
-  padding: '7px',
-  marginBottom: '10px',
-  boxSizing: 'border-box',
-};
+const parseGalleryImages = (value) =>
+  value
+    .split('\n')
+    .map((item) => item.trim())
+    .map((item) => {
+      if (!item) return '';
+      if (item.startsWith('http://') || item.startsWith('https://') || item.startsWith('/')) {
+        return item;
+      }
+      return `/${item}`;
+    })
+    .filter(Boolean);
+
+function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, submitLabel, categories }) {
+  const fields = [
+    { name: 'name', label: 'Product Name', type: 'text', required: true },
+    { name: 'price', label: 'Price (Rs.)', type: 'number', required: true },
+    { name: 'image', label: 'Thumbnail Image Path', type: 'text', required: true },
+    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text', required: true },
+    { name: 'backImage', label: 'Back Canvas Image Path', type: 'text', required: false },
+    { name: 'description', label: 'Description', type: 'text', required: true },
+  ];
+
+  return (
+    <form onSubmit={onSubmit} className="admin-form admin-form--embedded">
+      {fields.map((field) => (
+        <div key={field.name} className="admin-form__field">
+          <label>{field.label}</label>
+          <input type={field.type} name={field.name} value={values[field.name]} onChange={onChange} required={field.required} />
+        </div>
+      ))}
+
+      <div className="admin-form__field">
+        <label>Extra Gallery Images</label>
+        <textarea
+          name="galleryImages"
+          value={values.galleryImages}
+          onChange={onChange}
+          placeholder={'apparel/gallery/blue-hoodie-side.png\napparel/gallery/blue-hoodie-back.png'}
+          rows={5}
+        />
+        <small className="admin-form__hint">
+          Use `frontend/public/apparel/thumbnails` for product cards, `frontend/public/apparel/editor` for
+          front customization images, `frontend/public/apparel/editor back` for back customization images, and
+          `frontend/public/apparel/gallery` for extra detail images.
+        </small>
+      </div>
+
+      <div className="admin-form__field">
+        <label>Category</label>
+        <select name="type" value={values.type} onChange={onChange} required disabled={categories.length === 0}>
+          {categories.length === 0 && <option value="">Add a category first</option>}
+          {categories.map((category) => (
+            <option key={category._id} value={category.slug}>{category.name}</option>
+          ))}
+        </select>
+        <small className="admin-form__hint">Categories are managed separately so each one can include its own thumbnail.</small>
+      </div>
+
+      <label className="admin-form__checkbox">
+        <input
+          type="checkbox"
+          name="isOutOfStock"
+          checked={values.isOutOfStock}
+          onChange={onChange}
+        />
+        <span>Mark this product as out of stock</span>
+      </label>
+
+      {error && <p className="admin-message admin-message--error">{error}</p>}
+
+      <div className="admin-header__actions">
+        <button type="submit" disabled={loading || categories.length === 0} className="admin-btn admin-btn--primary">
+          {loading ? 'Saving...' : submitLabel}
+        </button>
+        <button type="button" onClick={onCancel} className="admin-btn admin-btn--ghost">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function AdminProducts() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // editing state
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(createEmptyForm());
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
-
-  // add new product form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState(EMPTY_FORM);
+  const [addForm, setAddForm] = useState(createEmptyForm());
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
 
   const fetchProducts = () => {
     setLoading(true);
     fetch('http://localhost:3000/products')
-      .then(res => res.json())
-      .then(data => { setProducts(data); setLoading(false); })
+      .then((res) => res.json())
+      .then((data) => {
+        setProducts(data);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    fetchProducts();
+    fetch('http://localhost:3000/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        const nextCategories = Array.isArray(data) ? data : [];
+        setCategories(nextCategories);
+        const fallbackCategory = nextCategories[0]?.slug || '';
+        setAddForm((current) => ({
+          ...current,
+          type: nextCategories.some((category) => category.slug === current.type) ? current.type : fallbackCategory,
+        }));
+        setForm((current) => ({
+          ...current,
+          type: nextCategories.some((category) => category.slug === current.type) ? current.type : fallbackCategory,
+        }));
+      })
+      .catch(() => setCategories([]));
+  }, []);
 
-  /* ── EDIT ── */
   const startEdit = (product) => {
     setEditingId(product._id);
     setForm({
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      baseImage: product.baseImage,
-      description: product.description,
-      type: product.type || 'tshirt',
+      name: product.name || '',
+      price: product.price || '',
+      image: product.image || '',
+      baseImage: product.baseImage || '',
+      backImage: product.backImage || '',
+      galleryImages: (product.galleryImages || []).join('\n'),
+      description: product.description || '',
+      type: product.type || categories[0]?.slug || '',
+      isOutOfStock: Boolean(product.isOutOfStock),
     });
     setFormError('');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm(createEmptyForm(categories[0]?.slug || ''));
     setFormError('');
   };
 
@@ -75,19 +180,23 @@ function AdminProducts() {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, price: Number(form.price) }),
+        body: JSON.stringify({
+          ...form,
+          price: Number(form.price),
+          galleryImages: parseGalleryImages(form.galleryImages),
+        }),
       });
-      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Failed to update');
       cancelEdit();
       fetchProducts();
     } catch (err) {
-      setFormError(err.message);
+      setFormError(err.message || 'Failed to update');
     } finally {
       setFormLoading(false);
     }
   };
 
-  /* ── DELETE ── */
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
@@ -101,7 +210,39 @@ function AdminProducts() {
     }
   };
 
-  /* ── ADD NEW ── */
+  const handleStockToggle = async (product) => {
+    try {
+      const res = await fetch(`http://localhost:3000/admin/products/${product._id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: product.name || '',
+          price: Number(product.price) || 0,
+          image: product.image || '',
+          baseImage: product.baseImage || '',
+          backImage: product.backImage || '',
+          description: product.description || '',
+          type: product.type || categories[0]?.slug || '',
+          galleryImages: product.galleryImages || [],
+          isOutOfStock: !product.isOutOfStock,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update stock status');
+      }
+
+      if (editingId === product._id) {
+        cancelEdit();
+      }
+
+      fetchProducts();
+    } catch (err) {
+      alert(err.message || 'Failed to update stock status');
+    }
+  };
+
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     setAddLoading(true);
@@ -111,169 +252,174 @@ function AdminProducts() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...addForm, price: Number(addForm.price) }),
+        body: JSON.stringify({
+          ...addForm,
+          price: Number(addForm.price),
+          galleryImages: parseGalleryImages(addForm.galleryImages),
+        }),
       });
-      if (!res.ok) throw new Error('Failed to add product');
-      setAddForm(EMPTY_FORM);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Failed to add product');
+      setAddForm(createEmptyForm(categories[0]?.slug || ''));
       setShowAddForm(false);
       fetchProducts();
     } catch (err) {
-      setAddError(err.message);
+      setAddError(err.message || 'Failed to add product');
     } finally {
       setAddLoading(false);
     }
   };
 
-  const fields = [
-    { name: 'name', label: 'Product Name', type: 'text' },
-    { name: 'price', label: 'Price (₹)', type: 'number' },
-    { name: 'image', label: 'Thumbnail Image Path', type: 'text' },
-    { name: 'baseImage', label: 'Base Canvas Image Path', type: 'text' },
-    { name: 'description', label: 'Description', type: 'text' },
-  ];
-
-  const ProductForm = ({ values, onChange, onSubmit, onCancel, error, loading, submitLabel }) => (
-    <form onSubmit={onSubmit} style={{ background: '#f9f9f9', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-      {fields.map(f => (
-        <div key={f.name}>
-          <label style={{ display: 'block', marginBottom: '3px', fontSize: '13px', fontWeight: 'bold' }}>{f.label}</label>
-          <input
-            type={f.type}
-            name={f.name}
-            value={values[f.name]}
-            onChange={onChange}
-            required
-            style={inputStyle}
-          />
-        </div>
-      ))}
-
-      <label style={{ display: 'block', marginBottom: '3px', fontSize: '13px', fontWeight: 'bold' }}>Type</label>
-      <select
-        name="type"
-        value={values.type}
-        onChange={onChange}
-        style={{ ...inputStyle }}
-      >
-        <option value="tshirt">T-Shirt</option>
-        <option value="hoodie">Hoodie</option>
-        <option value="shirt">Shirt</option>
-      </select>
-
-      {error && <p style={{ color: 'red', margin: '8px 0' }}>{error}</p>}
-
-      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-        <button type="submit" disabled={loading}
-          style={{ padding: '8px 20px', background: '#2a2', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-          {loading ? 'Saving...' : submitLabel}
-        </button>
-        <button type="button" onClick={onCancel}
-          style={{ padding: '8px 20px', background: '#888', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-
   return (
-    <div style={{ padding: '20px', maxWidth: '900px' }}>
-
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0 }}>Manage Products</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => navigate('/admin/orders')}
-            style={{ padding: '8px 16px', cursor: 'pointer' }}>
-            ← Orders
+    <main className="admin-page">
+      <section className="admin-header">
+        <div>
+          <p className="admin-header__eyebrow">Admin dashboard</p>
+          <h2>Manage Products</h2>
+        </div>
+        <div className="admin-header__actions">
+          <button onClick={() => navigate('/admin/orders')} className="admin-btn admin-btn--ghost" type="button">
+            Orders
+          </button>
+          <button onClick={() => navigate('/admin/categories')} className="admin-btn admin-btn--ghost" type="button">
+            Categories
           </button>
           <button
-            onClick={() => { setShowAddForm(!showAddForm); setAddError(''); setAddForm(EMPTY_FORM); }}
-            style={{ padding: '8px 16px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-            {showAddForm ? 'Cancel' : '+ Add New Product'}
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setAddError('');
+              setAddForm(createEmptyForm(categories[0]?.slug || ''));
+            }}
+            className="admin-btn admin-btn--primary"
+            type="button"
+          >
+            {showAddForm ? 'Cancel' : 'Add New Product'}
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Add new product form */}
-      {showAddForm && (
-        <ProductForm
-          values={addForm}
-          onChange={e => setAddForm({ ...addForm, [e.target.name]: e.target.value })}
-          onSubmit={handleAddSubmit}
-          onCancel={() => { setShowAddForm(false); setAddForm(EMPTY_FORM); }}
-          error={addError}
-          loading={addLoading}
-          submitLabel="Add Product"
-        />
+      {!loading && (
+        <section className="admin-stats">
+          <article className="admin-stat-card admin-stat-card--primary">
+            <p>Total Products</p>
+            <strong>{products.length}</strong>
+          </article>
+          {categories.slice(0, 3).map((category) => (
+            <article key={category._id} className="admin-stat-card admin-stat-card--neutral">
+              <p>{category.name}</p>
+              <strong>{products.filter((product) => product.type === category.slug).length}</strong>
+            </article>
+          ))}
+        </section>
       )}
 
-      {loading ? <p>Loading products...</p> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f0f0f0', textAlign: 'left' }}>
-              <th style={th}>Image</th>
-              <th style={th}>Name</th>
-              <th style={th}>Type</th>
-              <th style={th}>Price</th>
-              <th style={th}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(product => (
-              <>
-                <tr key={product._id} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={td}>
-                    <img src={product.image} alt={product.name}
-                      style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
-                  </td>
-                  <td style={td}>
-                    <strong>{product.name}</strong>
-                    <p style={{ margin: '2px 0', fontSize: '12px', color: '#777' }}>{product.description}</p>
-                  </td>
-                  <td style={td}>{TYPE_LABELS[product.type] || product.type}</td>
-                  <td style={td}>₹{product.price}</td>
-                  <td style={td}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => editingId === product._id ? cancelEdit() : startEdit(product)}
-                        style={{ padding: '6px 14px', background: '#448', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-                        {editingId === product._id ? 'Cancel' : 'Edit'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product._id, product.name)}
-                        style={{ padding: '6px 14px', background: '#e44', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+      {showAddForm && (
+        <section className="admin-form-card">
+          <ProductForm
+            values={addForm}
+            onChange={(e) =>
+              setAddForm({
+                ...addForm,
+                [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+              })
+            }
+            onSubmit={handleAddSubmit}
+            onCancel={() => {
+              setShowAddForm(false);
+              setAddForm(createEmptyForm(categories[0]?.slug || ''));
+            }}
+            error={addError}
+            loading={addLoading}
+            submitLabel="Add Product"
+            categories={categories}
+          />
+        </section>
+      )}
 
-                {/* Inline edit form row */}
-                {editingId === product._id && (
-                  <tr key={`edit-${product._id}`}>
-                    <td colSpan={5} style={{ padding: '12px', background: '#fffbe6' }}>
-                      <ProductForm
-                        values={form}
-                        onChange={e => setForm({ ...form, [e.target.name]: e.target.value })}
-                        onSubmit={handleEditSubmit}
-                        onCancel={cancelEdit}
-                        error={formError}
-                        loading={formLoading}
-                        submitLabel="Save Changes"
-                      />
+      {loading ? (
+        <main className="admin-page admin-page--message">Loading products...</main>
+      ) : (
+        <section className="admin-table-shell">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <Fragment key={product._id}>
+                  <tr key={product._id}>
+                    <td>
+                      <img src={product.image} alt={product.name} className="admin-table__thumb" />
+                    </td>
+                    <td>
+                      <strong>{product.name}</strong>
+                      <p className="admin-table__sub">{product.description}</p>
+                      {product.backImage && <p className="admin-table__sub">Back design enabled</p>}
+                      {product.isOutOfStock && <p className="admin-table__stock admin-table__stock--out">Out of stock</p>}
+                    </td>
+                    <td>{formatCategoryLabel(product.type)}</td>
+                    <td>Rs. {product.price}</td>
+                    <td>
+                      <div className="admin-header__actions">
+                        <button
+                          onClick={() => (editingId === product._id ? cancelEdit() : startEdit(product))}
+                          className="admin-btn admin-btn--ghost"
+                          type="button"
+                        >
+                          {editingId === product._id ? 'Cancel' : 'Edit'}
+                        </button>
+                        <button
+                          onClick={() => handleStockToggle(product)}
+                          className={`admin-btn ${product.isOutOfStock ? 'admin-btn--success' : 'admin-btn--warning'}`}
+                          type="button"
+                        >
+                          {product.isOutOfStock ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product._id, product.name)}
+                          className="admin-btn admin-btn--danger"
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
+                  {editingId === product._id && (
+                    <tr>
+                      <td colSpan={5} className="admin-table__edit-cell">
+                        <ProductForm
+                          values={form}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+                            })
+                          }
+                          onSubmit={handleEditSubmit}
+                          onCancel={cancelEdit}
+                          error={formError}
+                          loading={formLoading}
+                          submitLabel="Save Changes"
+                          categories={categories}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
-
-const th = { padding: '12px', borderBottom: '2px solid #ddd', fontWeight: 'bold' };
-const td = { padding: '12px', verticalAlign: 'middle' };
 
 export default AdminProducts;
