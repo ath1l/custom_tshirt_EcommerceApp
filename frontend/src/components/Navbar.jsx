@@ -5,6 +5,7 @@ import "../styles/navbar.css";
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileInitial, setProfileInitial] = useState("U");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +22,7 @@ function Navbar() {
 
         setIsAuthenticated(Boolean(data.isAuthenticated));
         setIsAdmin(data.user?.role === "admin");
+        setProfileInitial((data.user?.username?.[0] || "U").toUpperCase());
       })
       .catch((err) => {
         console.error(err);
@@ -38,6 +40,7 @@ function Navbar() {
     });
     setIsAuthenticated(false);
     setIsAdmin(false);
+    setProfileInitial("U");
     navigate("/login");
   };
 
@@ -66,9 +69,19 @@ function Navbar() {
 
         <div className="navbar__actions">
           {isAuthenticated ? (
-            <button className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
+            <>
+              <Link
+                to="/profile"
+                className="profile-icon"
+                aria-label="Go to profile"
+                title="Profile"
+              >
+                {profileInitial}
+              </Link>
+              <button className="logout-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </>
           ) : (
             <>
               <Link to="/login" className="auth-btn auth-btn--ghost">Login</Link>

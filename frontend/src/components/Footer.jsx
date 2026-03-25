@@ -1,23 +1,14 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "../styles/footer.css";
 
 const YEAR = new Date().getFullYear();
 
-const NAV_COLUMNS = [
+const BASE_NAV_COLUMNS = [
   {
     heading: "Shop",
     links: [
       { label: "All Products", to: "/products" },
-      { label: "Customize", to: "/#customize" },
-      { label: "Cart", to: "/#cart" },
-      { label: "My Orders", to: "/#orders" },
-    ],
-  },
-  {
-    heading: "Account",
-    links: [
-      { label: "Login", to: "/#login" },
-      { label: "Register", to: "/#register" },
-      { label: "Profile", to: "/#profile" },
     ],
   },
   {
@@ -32,12 +23,49 @@ const NAV_COLUMNS = [
 ];
 
 export default function Footer() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetch("http://localhost:3000/check-auth", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled) {
+          setIsAuthenticated(Boolean(data.isAuthenticated));
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const navColumns = [
+    ...BASE_NAV_COLUMNS,
+    {
+      heading: "Account",
+      links: isAuthenticated
+        ? [
+            { label: "Cart", to: "/cart" },
+            { label: "My Orders", to: "/orders" },
+            { label: "Profile", to: "/profile" },
+          ]
+        : [
+            { label: "Login", to: "/login" },
+            { label: "Register", to: "/register" },
+          ],
+    },
+  ];
+
   return (
     <footer className="footer">
-      {/* ── top strip ── */}
       <div className="footer__inner">
-
-        {/* brand block */}
         <div className="footer__brand">
           <a href="/" className="footer__logo">
             Custo<span>Me</span>
@@ -45,17 +73,18 @@ export default function Footer() {
           <p className="footer__tagline">
             Your vision, your fabric, your rules. Design custom apparel that
             says exactly what you mean.
-          </p> 
+          </p>
         </div>
 
-        {/* nav columns */}
-        {NAV_COLUMNS.map((col) => (
+        {navColumns.map((col) => (
           <div key={col.heading} className="footer__col">
             <h4 className="footer__col-heading">{col.heading}</h4>
             <ul className="footer__col-links">
-              {col.links.map((l) => (
-                <li key={l.label}>
-                  <a href={l.to} className="footer__link">{l.label}</a>
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  <Link to={link.to} className="footer__link">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -63,11 +92,8 @@ export default function Footer() {
         ))}
       </div>
 
-      {/* ── bottom bar ── */}
       <div className="footer__bottom">
-        <p className="footer__copy">
-          © {YEAR} CustoMe. All rights reserved.
-        </p>
+        <p className="footer__copy">(c) {YEAR} CustoMe. All rights reserved.</p>
         <p className="footer__made">
           Crafted with care for custom apparel lovers.
         </p>
@@ -75,3 +101,4 @@ export default function Footer() {
     </footer>
   );
 }
+
