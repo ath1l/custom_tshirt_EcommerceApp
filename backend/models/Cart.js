@@ -6,7 +6,7 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
-  designJSON: { type: Object, required: true },
+  designJSON: { type: Object, default:null },
   previewImage: { type: String, required: true },
   previewImages: {
     front: { type: String, default: '' },

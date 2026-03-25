@@ -1,12 +1,11 @@
 /* Center login page content */
 .login-page {
-  min-height: calc(100vh - 70px); /* minus navbar height */
+  min-height: calc(100vh - 70px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Glass login card */
 .login-card {
   width: 100%;
   max-width: 380px;
@@ -18,7 +17,6 @@
   box-shadow: 0 12px 30px rgba(17, 17, 17, 0.06);
 }
 
-/* Brand title */
 .login-title {
   font-size: 34px;
   font-weight: 800;
@@ -26,28 +24,66 @@
   color: #a8c3a0;
 }
 
-/* Subtitle */
 .login-subtitle {
   font-size: 14px;
   color: var(--muted);
   margin: 10px 0 24px;
 }
 
-/* Error text */
 .login-error {
-  color: var(--accent);
+  color: #e74c3c;
   margin-bottom: 12px;
   font-size: 13px;
 }
 
-/* Form layout */
+/* ── Google button ── */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.google-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* ── Divider ── */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* ── Form ── */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Input fields */
 .login-input {
   background: #fff;
   border: 1px solid #d1d5db;
@@ -59,9 +95,8 @@
 }
 
 .login-input::placeholder { color: #9ca3af; }
-.login-input:focus { border-color: var(--accent); }
+.login-input:focus { border-color: #a8c3a0; }
 
-/* Login button */
 .login-button {
   margin-top: 10px;
   padding: 12px;
@@ -76,16 +111,15 @@
 }
 
 .login-button:hover { background: #889e81; }
+.login-button:disabled { background: #9ca3af; cursor: not-allowed; }
 
-/* Footer text */
 .login-footer {
   margin-top: 20px;
   font-size: 13px;
   color: var(--muted);
 }
 
-.login-footer span,
 .login-footer a {
-  color: var(--accent);
+  color: #a8c3a0;
   cursor: pointer;
 }

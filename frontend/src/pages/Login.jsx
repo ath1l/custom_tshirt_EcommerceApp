@@ -1,6 +1,5 @@
-// frontend/src/pages/Login.jsx
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import "../styles/background.css";
 import "../styles/login.css";
 
@@ -9,6 +8,10 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Show error if Google OAuth failed (redirected back with ?error=google_failed)
+  const [searchParams] = useSearchParams();
+  const googleError = searchParams.get('error') === 'google_failed';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +44,32 @@ function Login() {
         <h1 className="login-title">Login</h1>
         <p className="login-subtitle">Sign in to continue shopping.</p>
 
-        {error && <p className="login-error">{error}</p>}
+        {(error || googleError) && (
+          <p className="login-error">
+            {googleError ? 'Google sign-in failed. Please try again.' : error}
+          </p>
+        )}
+
+        {/* ── Google sign-in ── */}
+        {/* This is a plain redirect, not a fetch() call.
+            Why? Because OAuth requires the browser to actually navigate to Google.
+            You can't do OAuth inside a fetch — Google won't set cookies cross-origin. */}
+        <a
+          href="http://localhost:3000/auth/google"
+          className="google-btn"
+        >
+          <img
+            src="https://www.google.com/favicon.ico"
+            alt=""
+            width="18"
+            height="18"
+          />
+          Continue with Google
+        </a>
+
+        <div className="login-divider">
+          <span>or</span>
+        </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <input
