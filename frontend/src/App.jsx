@@ -12,6 +12,7 @@ import Customize from "./pages/Customize";
 import AdminOrders from './pages/AdminOrders';
 import AdminAddProduct from './pages/AdminAddProduct';
 import AdminCategories from './pages/AdminCategories';
+import AdminInsights from './pages/AdminInsights';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Profile from './pages/profile';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/admin/products/new" element={<AdminAddProduct />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/categories" element={<AdminCategories />} />
+        <Route path="/admin/insights" element={<AdminInsights />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/profile" element={<Profile />} />

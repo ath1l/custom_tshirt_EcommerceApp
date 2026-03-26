@@ -79,6 +79,9 @@ function AdminOrders() {
           <h2>Orders Overview</h2>
         </div>
         <div className="admin-header__actions">
+          <button onClick={() => navigate('/admin/insights')} className="admin-btn admin-btn--ghost" type="button">
+            Insights
+          </button>
           <button onClick={() => navigate('/admin/products')} className="admin-btn admin-btn--ghost" type="button">
             Manage Products
           </button>

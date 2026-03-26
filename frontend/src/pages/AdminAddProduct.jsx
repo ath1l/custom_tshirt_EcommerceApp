@@ -117,6 +117,9 @@ function AdminAddProduct() {
       <section className="admin-header">
         <h2>Add New Product</h2>
         <div className="admin-header__actions">
+          <button onClick={() => navigate('/admin/insights')} className="admin-btn admin-btn--ghost" type="button">
+            Insights
+          </button>
           <button onClick={() => navigate('/admin/categories')} className="admin-btn admin-btn--ghost" type="button">
             Manage Categories
           </button>
