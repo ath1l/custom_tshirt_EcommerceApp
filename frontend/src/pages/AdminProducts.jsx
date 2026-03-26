@@ -278,6 +278,9 @@ function AdminProducts() {
           <h2>Manage Products</h2>
         </div>
         <div className="admin-header__actions">
+          <button onClick={() => navigate('/admin/insights')} className="admin-btn admin-btn--ghost" type="button">
+            Insights
+          </button>
           <button onClick={() => navigate('/admin/orders')} className="admin-btn admin-btn--ghost" type="button">
             Orders
           </button>
