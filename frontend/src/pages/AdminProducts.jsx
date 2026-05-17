@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Rnd } from 'react-rnd';
 import '../styles/admin.css';
 
 const createEmptyForm = (categorySlug = '') => ({
@@ -12,6 +13,10 @@ const createEmptyForm = (categorySlug = '') => ({
   description: '',
   type: categorySlug,
   isOutOfStock: false,
+  restrictionWidth: '200',
+  restrictionHeight: '300',
+  restrictionCenterX: '200',
+  restrictionCenterY: '290',
 });
 
 const formatCategoryLabel = (value) =>
@@ -34,7 +39,106 @@ const parseGalleryImages = (value) =>
     })
     .filter(Boolean);
 
-function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, submitLabel, categories }) {
+function RestrictionBoxEditor({ values, onChange }) {
+  const [previewSide, setPreviewSide] = useState('front');
+  const frontPreviewImage = values.baseImage || values.image || '';
+  const backPreviewImage = values.backImage || values.baseImage || values.image || '';
+  const previewImage = previewSide === 'back' ? backPreviewImage : frontPreviewImage;
+
+  const commitBox = (nextBox) => {
+    const nextCenterX = nextBox.x + nextBox.width / 2;
+    const nextCenterY = nextBox.y + nextBox.height / 2;
+    onChange({ target: { name: 'restrictionWidth', value: String(nextBox.width), type: 'number' } });
+    onChange({ target: { name: 'restrictionHeight', value: String(nextBox.height), type: 'number' } });
+    onChange({ target: { name: 'restrictionCenterX', value: String(nextCenterX), type: 'number' } });
+    onChange({ target: { name: 'restrictionCenterY', value: String(nextCenterY), type: 'number' } });
+  };
+
+  return (
+    <section className="admin-restriction-editor">
+      <div className="admin-restriction-editor__tabs">
+        <button
+          type="button"
+          className={`admin-restriction-editor__tab ${previewSide === 'front' ? 'is-active' : ''}`}
+          onClick={() => setPreviewSide('front')}
+        >
+          Front Preview
+        </button>
+        <button
+          type="button"
+          className={`admin-restriction-editor__tab ${previewSide === 'back' ? 'is-active' : ''}`}
+          onClick={() => setPreviewSide('back')}
+        >
+          Back Preview
+        </button>
+      </div>
+      <div
+        className="admin-restriction-editor__stage"
+      >
+        {previewImage ? (
+          <img className="admin-restriction-editor__image" src={previewImage} alt={`${previewSide} preview`} />
+        ) : (
+          <div className="admin-restriction-editor__empty">No preview image</div>
+        )}
+        <Rnd
+          key={`${previewSide}-${values.restrictionWidth}-${values.restrictionHeight}-${values.restrictionCenterX}-${values.restrictionCenterY}-${previewImage}`}
+          bounds="parent"
+          default={{
+            width: Math.max(20, Number(values.restrictionWidth) || 200),
+            height: Math.max(20, Number(values.restrictionHeight) || 300),
+            x: Math.max(0, (Number(values.restrictionCenterX) || 200) - (Math.max(20, Number(values.restrictionWidth) || 200) / 2)),
+            y: Math.max(0, (Number(values.restrictionCenterY) || 290) - (Math.max(20, Number(values.restrictionHeight) || 300) / 2)),
+          }}
+          enableResizing={{
+            bottom: true,
+            bottomLeft: true,
+            bottomRight: true,
+            left: true,
+            right: true,
+            top: true,
+            topLeft: true,
+            topRight: true,
+          }}
+          onDragStop={(_, data) => {
+            commitBox({
+              width: Number(values.restrictionWidth) || 200,
+              height: Number(values.restrictionHeight) || 300,
+              x: data.x,
+              y: data.y,
+            });
+          }}
+          onResizeStop={(_, __, ref, ___, position) => {
+            const nextBox = {
+              width: ref.offsetWidth,
+              height: ref.offsetHeight,
+              x: position.x,
+              y: position.y,
+            };
+            commitBox(nextBox);
+          }}
+          className="admin-restriction-editor__box"
+        >
+          <span className="admin-restriction-editor__box-label">Drag area</span>
+        </Rnd>
+      </div>
+      <p className="admin-form__hint">
+        Drag the box to move the customization area. Switch between front and back previews to place it more accurately.
+      </p>
+    </section>
+  );
+}
+
+function ProductForm({
+  values,
+  onChange,
+  onSubmit,
+  onCancel,
+  error,
+  loading,
+  submitLabel,
+  categories,
+  showRestrictionEditor = false,
+}) {
   const fields = [
     { name: 'name', label: 'Product Name', type: 'text', required: true },
     { name: 'price', label: 'Price (Rs.)', type: 'number', required: true },
@@ -79,6 +183,12 @@ function ProductForm({ values, onChange, onSubmit, onCancel, error, loading, sub
         </select>
         <small className="admin-form__hint">Categories are managed separately so each one can include its own thumbnail.</small>
       </div>
+
+      {showRestrictionEditor && (
+        <>
+          <RestrictionBoxEditor values={values} onChange={onChange} />
+        </>
+      )}
 
       <label className="admin-form__checkbox">
         <input
@@ -161,6 +271,10 @@ function AdminProducts() {
       description: product.description || '',
       type: product.type || categories[0]?.slug || '',
       isOutOfStock: Boolean(product.isOutOfStock),
+      restrictionWidth: String(product.customizationArea?.width || 200),
+      restrictionHeight: String(product.customizationArea?.height || 300),
+      restrictionCenterX: String(product.customizationArea?.centerX || 200),
+      restrictionCenterY: String(product.customizationArea?.centerY || 290),
     });
     setFormError('');
   };
@@ -184,6 +298,12 @@ function AdminProducts() {
           ...form,
           price: Number(form.price),
           galleryImages: parseGalleryImages(form.galleryImages),
+          customizationArea: {
+            width: Number(form.restrictionWidth),
+            height: Number(form.restrictionHeight),
+            centerX: Number(form.restrictionCenterX),
+            centerY: Number(form.restrictionCenterY),
+          },
         }),
       });
       const data = await res.json().catch(() => null);
@@ -335,6 +455,7 @@ function AdminProducts() {
             loading={addLoading}
             submitLabel="Add Product"
             categories={categories}
+            showRestrictionEditor={false}
           />
         </section>
       )}
@@ -411,6 +532,7 @@ function AdminProducts() {
                           loading={formLoading}
                           submitLabel="Save Changes"
                           categories={categories}
+                          showRestrictionEditor
                         />
                       </td>
                     </tr>

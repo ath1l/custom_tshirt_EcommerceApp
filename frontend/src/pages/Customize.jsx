@@ -45,11 +45,21 @@ const FONTS = [
 ];
 
 const DEFAULT_SIDE = "front";
-const PRINT_AREA = {
+const DEFAULT_PRINT_AREA = {
   width: 200,
   height: 300,
   centerX: 400 / 2,
   centerY: 500 / 2 + 40,
+};
+
+const getPrintArea = (product) => {
+  const area = product?.customizationArea || {};
+  return {
+    width: Math.max(20, Number(area.width) || DEFAULT_PRINT_AREA.width),
+    height: Math.max(20, Number(area.height) || DEFAULT_PRINT_AREA.height),
+    centerX: Number.isFinite(Number(area.centerX)) ? Number(area.centerX) : DEFAULT_PRINT_AREA.centerX,
+    centerY: Number.isFinite(Number(area.centerY)) ? Number(area.centerY) : DEFAULT_PRINT_AREA.centerY,
+  };
 };
 
 function getInitialSideDesigns(designJSON) {
@@ -132,6 +142,8 @@ function Customize() {
       return;
     }
 
+    const printArea = getPrintArea(product);
+
     canvas.clear();
 
     const tshirt = await fabric.Image.fromURL(sideImage);
@@ -149,10 +161,10 @@ function Customize() {
     tshirt.setCoords();
 
     const guideRect = new fabric.Rect({
-      width: PRINT_AREA.width,
-      height: PRINT_AREA.height,
-      left: PRINT_AREA.centerX,
-      top: PRINT_AREA.centerY,
+      width: printArea.width,
+      height: printArea.height,
+      left: printArea.centerX,
+      top: printArea.centerY,
       originX: "center",
       originY: "center",
       fill: "transparent",
@@ -186,15 +198,18 @@ function Customize() {
   }, [getSideImage]);
 
   const buildClipRect = () =>
-    new fabric.Rect({
-      width: PRINT_AREA.width,
-      height: PRINT_AREA.height,
-      left: PRINT_AREA.centerX,
-      top: PRINT_AREA.centerY,
-      originX: "center",
-      originY: "center",
-      absolutePositioned: true,
-    });
+    (() => {
+      const printArea = getPrintArea(productRef.current);
+      return new fabric.Rect({
+        width: printArea.width,
+        height: printArea.height,
+        left: printArea.centerX,
+        top: printArea.centerY,
+        originX: "center",
+        originY: "center",
+        absolutePositioned: true,
+      });
+    })();
 
   const attachDeleteControl = (fabricObject) => {
     fabricObject.controls.deleteControl = new fabric.Control({
@@ -259,10 +274,11 @@ function Customize() {
 
   const handleAddText = () => {
     if (!textInput.trim() || !fabricCanvasRef.current) return;
+    const printArea = getPrintArea(productRef.current);
 
     const text = new fabric.IText(textInput, {
-      left: PRINT_AREA.centerX,
-      top: PRINT_AREA.centerY,
+      left: printArea.centerX,
+      top: printArea.centerY,
       originX: "center",
       originY: "center",
       fontFamily: textFont,
@@ -286,14 +302,15 @@ function Customize() {
     const file = e.target.files[0];
     if (!file) return;
     setUploadedFileName(file.name);
+    const printArea = getPrintArea(productRef.current);
 
     const reader = new FileReader();
     reader.onload = async () => {
       const img = await fabric.Image.fromURL(reader.result);
       img.scaleToWidth(150);
       img.set({
-        left: fabricCanvasRef.current.width / 2,
-        top: fabricCanvasRef.current.height / 2,
+        left: printArea.centerX,
+        top: printArea.centerY,
         originX: "center",
         originY: "center",
       });

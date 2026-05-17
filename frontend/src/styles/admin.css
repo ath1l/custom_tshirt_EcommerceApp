@@ -362,6 +362,111 @@
   width: auto;
 }
 
+.admin-restriction-editor {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-restriction-editor__tabs {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-restriction-editor__tab {
+  border: 1px solid #d6dfd3;
+  background: #f7faf7;
+  color: #324032;
+  border-radius: 999px;
+  padding: 0.6rem 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-restriction-editor__tab.is-active {
+  background: #a8c3a0;
+  color: #ffffff;
+  border-color: #a8c3a0;
+}
+
+.admin-restriction-editor__stage {
+  position: relative;
+  width: 400px;
+  height: 500px;
+  max-width: 100%;
+  border-radius: 18px;
+  border: 1px solid #d6dfd3;
+  background-color: #f7faf7;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  overflow: hidden;
+}
+
+.admin-restriction-editor__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f7faf7;
+  user-select: none;
+  pointer-events: none;
+}
+
+.admin-restriction-editor__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #6b7280;
+  font-size: 0.92rem;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fbfcfa 0%, #f3f7f2 100%);
+}
+
+.admin-restriction-editor__box {
+  position: relative;
+  border: 2px dashed #7fb36f;
+  background: rgba(168, 195, 160, 0.14);
+  border-radius: 14px;
+  display: block;
+  color: #2f7a40;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(1px);
+  z-index: 2;
+  cursor: move;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+.admin-restriction-editor__box-label {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.admin-restriction-editor__box .react-resizable-handle {
+  width: 14px;
+  height: 14px;
+  background: #7fb36f;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  opacity: 1;
+}
+
+.admin-restriction-editor__box .react-resizable-handle-se {
+  right: -7px;
+  bottom: -7px;
+}
+
 .admin-form__field input,
 .admin-form__field select,
 .admin-form__field textarea {

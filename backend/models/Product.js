@@ -19,6 +19,25 @@ const productSchema = new mongoose.Schema({
         default: [],
     },
 
+    customizationArea: {
+        width: {
+            type: Number,
+            default: 200,
+        },
+        height: {
+            type: Number,
+            default: 300,
+        },
+        centerX: {
+            type: Number,
+            default: 200,
+        },
+        centerY: {
+            type: Number,
+            default: 290,
+        },
+    },
+
     isOutOfStock: {
         type: Boolean,
         default: false,

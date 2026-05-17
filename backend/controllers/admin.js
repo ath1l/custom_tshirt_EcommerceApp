@@ -25,6 +25,13 @@ const normalizeCategorySlug = (value) =>
     .toLowerCase()
     .replace(/\s+/g, '-');
 
+const normalizeCustomizationArea = (value) => ({
+  width: Math.max(20, Number(value?.width) || 200),
+  height: Math.max(20, Number(value?.height) || 300),
+  centerX: Number.isFinite(Number(value?.centerX)) ? Number(value.centerX) : 200,
+  centerY: Number.isFinite(Number(value?.centerY)) ? Number(value.centerY) : 290,
+});
+
 module.exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -66,7 +73,18 @@ module.exports.updateOrderStatus = async (req, res) => {
 
 module.exports.addProduct = async (req, res) => {
   try {
-    const { name, price, image, baseImage, backImage, galleryImages, isOutOfStock, description, type } = req.body;
+    const {
+      name,
+      price,
+      image,
+      baseImage,
+      backImage,
+      galleryImages,
+      isOutOfStock,
+      description,
+      type,
+      customizationArea,
+    } = req.body;
     const normalizedType = normalizeCategorySlug(type);
     const category = await Category.findOne({ slug: normalizedType });
     if (!category) {
@@ -82,6 +100,7 @@ module.exports.addProduct = async (req, res) => {
       galleryImages: normalizeAssetList(galleryImages),
       isOutOfStock: Boolean(isOutOfStock),
       description,
+      customizationArea: normalizeCustomizationArea(customizationArea),
     });
     product.type = normalizedType;
     await product.save();
@@ -93,7 +112,18 @@ module.exports.addProduct = async (req, res) => {
 
 module.exports.editProduct = async (req, res) => {
   try {
-    const { name, price, image, baseImage, backImage, galleryImages, isOutOfStock, description, type } = req.body;
+    const {
+      name,
+      price,
+      image,
+      baseImage,
+      backImage,
+      galleryImages,
+      isOutOfStock,
+      description,
+      type,
+      customizationArea,
+    } = req.body;
     const normalizedType = normalizeCategorySlug(type);
     const category = await Category.findOne({ slug: normalizedType });
     if (!category) {
@@ -112,6 +142,10 @@ module.exports.editProduct = async (req, res) => {
     product.isOutOfStock = Boolean(isOutOfStock);
     product.description = description;
     product.type = normalizedType;
+    product.customizationArea =
+      customizationArea === undefined
+        ? product.customizationArea
+        : normalizeCustomizationArea(customizationArea);
 
     await product.save();
     res.json(product);
